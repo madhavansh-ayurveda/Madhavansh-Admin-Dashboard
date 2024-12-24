@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { Card } from '@/components/ui/card'
 import { Users, Stethoscope, Calendar, IndianRupee } from 'lucide-react'
-import { adminApi, DashboardStats, ConsultationStats } from '@/api/adminApi'
+import { adminApi } from '@/api/adminApi'
+import { DashboardStats, ConsultationStats } from '@/types'
+import { setCredentials } from '@/store/authSlice'
 import {
     LineChart,
     Line,
@@ -13,6 +16,8 @@ import {
 } from 'recharts'
 
 export default function Dashboard() {
+    const dispatch = useDispatch()
+    const user = useSelector((state: { auth: { user: any } }) => state.auth.user)
     const [stats, setStats] = useState<DashboardStats | null>(null)
     const [consultationStats, setConsultationStats] = useState<ConsultationStats | null>(null)
     const [loading, setLoading] = useState(true)
@@ -24,8 +29,8 @@ export default function Dashboard() {
                     adminApi.getDashboardStats(),
                     adminApi.getConsultationStats()
                 ])
-                setStats(dashboardStats)
-                setConsultationStats(consStats)
+                setStats(dashboardStats);
+                setConsultationStats(consStats);
             } catch (error) {
                 console.error('Error fetching dashboard data:', error)
             } finally {
@@ -34,7 +39,7 @@ export default function Dashboard() {
         }
 
         fetchData()
-    }, [])
+    }, [dispatch])
 
     if (loading) {
         return <div>Loading...</div>
@@ -56,7 +61,7 @@ export default function Dashboard() {
     return (
         <div className="space-y-6">
             <h1 className="text-2xl font-semibold">Dashboard Overview</h1>
-
+            <p>User: {user?.name || 'No user logged in'}</p>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 {statCards.map((stat) => (
                     <Card key={stat.name} className="p-6">

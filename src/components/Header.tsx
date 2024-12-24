@@ -1,7 +1,6 @@
 import { Menu } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { authAdminApi } from '@/api/authAdminApi'
-import { useAuth } from '@/contexts/AuthContext'
 
 interface HeaderProps {
     onMenuButtonClick: () => void
@@ -9,17 +8,13 @@ interface HeaderProps {
 
 export default function Header({ onMenuButtonClick }: HeaderProps) {
     const navigate = useNavigate()
-    const { clearAuth } = useAuth()
 
     const handleLogout = async () => {
         try {
             await authAdminApi.logout()
-            clearAuth()
             navigate('/login', { replace: true })
         } catch (error) {
             console.error('Logout failed:', error)
-            // Force logout even if the API call fails
-            clearAuth()
             navigate('/login', { replace: true })
         }
     }

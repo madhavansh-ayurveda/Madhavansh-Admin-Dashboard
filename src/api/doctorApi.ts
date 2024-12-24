@@ -1,55 +1,87 @@
-import axios from 'axios';
+import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const axiosInstance = axios.create({
-    baseURL: `${API_URL}/doctors`,
+    baseURL: `${API_URL}/api`,
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json'
     }
 });
 
-export interface Doctor {
-    _id: string;
-    name: string;
-    email: string;
-    phone: string;
-    specialization: 'Ayurveda' | 'Panchakarma' | 'Yoga' | 'General';
-    qualification: string;
-    experience: number;
-    registrationNumber: string;
-    status: 'active' | 'inactive' | 'on-leave';
-    bio?: string;
-    profileImage?: string;
-    createdAt: string;
+export interface Slot {
+    startTime: string
+    endTime: string
+    isBooked?: boolean
 }
 
-export interface CreateDoctorDto {
-    name: string;
-    email: string;
-    password: string;
-    phone: string;
-    specialization: Doctor['specialization'];
-    qualification: string;
-    experience: number;
-    registrationNumber: string;
-    bio?: string;
+export interface ApiResponse {
+    data: Doctor[]
+    message: string
+    status: string
 }
+
+export interface Availability {
+    day: string
+    slots: Slot[]
+    _id?: string
+}
+
+export interface Doctor {
+    _id: string
+    name: string
+    email: string
+    phone: string
+    specialization: 'Ayurveda' | 'Panchakarma' | 'Yoga' | 'General'
+    qualification: string
+    experience: number
+    registrationNumber: string
+    availability: Availability[]
+    status: 'active' | 'inactive' | 'on-leave'
+    profileImage?: string
+    createdAt?: string
+    updatedAt?: string
+    __v?: number
+}
+
+export type CreateDoctorDto = Omit<Doctor, '_id' | 'createdAt' | 'updatedAt'>
 
 export const doctorApi = {
-    createDoctor: async (data: CreateDoctorDto): Promise<Doctor> => {
-        const response = await axiosInstance.post('/', data);
-        return response.data.data;
+    getAllDoctors: async (): Promise<ApiResponse> => {
+        const response = await axiosInstance.get('/doctors');
+        return response.data;
     },
 
-    getAllDoctors: async (): Promise<Doctor[]> => {
-        const response = await axiosInstance.get('/');
-        return response.data.data;
+    getDoctorById: async (id: string): Promise<Doctor> => {
+        const response = await axiosInstance.get(`/doctors/${id}`);
+        return response.data;
     },
 
-    updateDoctorStatus: async (id: string, status: Doctor['status']): Promise<Doctor> => {
-        const response = await axiosInstance.patch(`/${id}/status`, { status });
-        return response.data.data;
+    createDoctor: async (doctorData: CreateDoctorDto): Promise<Doctor> => {
+        const response = await axiosInstance.post('/doctors', doctorData);
+        return response.data;
+    },
+
+    updateDoctorStatus: async (id: string, status: string): Promise<Doctor> => {
+        const response = await axiosInstance.patch(`/doctors/${id}/status`, { status });
+        return response.data;
+    },
+
+    updateDoctorAvailability: async (
+        id: string,
+        availability: Doctor['availability']
+    ): Promise<Doctor> => {
+        const response = await axiosInstance.patch(`/doctors/${id}/availability`, { availability });
+        return response.data;
+    },
+
+    deleteDoctor: async (id: string): Promise<void> => {
+        await axiosInstance.delete(`/doctors/${id}`);
+    },
+
+    updateDoctor: async (id: string, doctorData: Partial<CreateDoctorDto>): Promise<Doctor> => {
+        const response = await axiosInstance.patch(`/doctors/${id}`, doctorData);
+        return response.data;
     }
 }; 

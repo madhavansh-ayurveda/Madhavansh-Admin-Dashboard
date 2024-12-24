@@ -1,16 +1,18 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { authAdminApi } from '@/api/authAdminApi'
-import { useAuth } from '@/contexts/AuthContext'
 import { toast } from 'react-hot-toast'
 import { Card } from '@/components/ui/card'
+import { useDispatch } from 'react-redux'
+import { setCredentials } from '@/store/authSlice'
+import Cookies from 'js-cookie'
 
 export default function Login() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const navigate = useNavigate()
-    const { setUser } = useAuth()
+    const dispatch = useDispatch()
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -18,16 +20,23 @@ export default function Login() {
 
         try {
             const response = await authAdminApi.login(email, password)
+            console.log('Login response:', response)
+            
             if (response.success && response.user) {
-                setUser(response.user)
+                dispatch(setCredentials({ user: response.user }))
+                Cookies.set('token', response.token)
                 toast.success('Login successful')
                 navigate('/', { replace: true })
             } else {
-                throw new Error('Invalid response from server')
+                throw new Error(response.message || 'Invalid response from server')
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Login error:', error)
-            toast.error(error instanceof Error ? error.message : 'Login failed')
+            toast.error(
+                error.response?.data?.message || 
+                error.message || 
+                'Login failed. Please check your credentials.'
+            )
             setPassword('')
         } finally {
             setIsLoading(false)

@@ -1,27 +1,48 @@
 import { useEffect, useState } from 'react'
 import { adminApi } from '@/api/adminApi'
 import { Card } from '@/components/ui/card'
-import { 
-    Table, 
-    TableBody, 
-    TableCell, 
-    TableHead, 
-    TableHeader, 
-    TableRow 
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow
 } from '@/components/ui/table'
 
+interface ApiResponse {
+    success: boolean;
+    count: number;
+    data: Consultation[];
+}
+
 interface Consultation {
-    _id: string
+    amount: number;
+    consultationType: 'General Consultation' | 'Follow-up' | 'Specific Treatment' | 'Emergency';
+    createdAt: string;
+    _id: string;
     patient: {
-        name: string
-        email: string
-    }
-    doctorId: string
-    consultationType: string
-    date: string
-    timeSlot: string
-    status: string
-    amount: number
+        _id: string;
+        name: string;
+        email: string;
+    };
+    doctorId: string;
+    date: string;
+    timeSlot: string;
+    symptoms: string;
+    status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+    notes?: string;
+    prescription: {
+        medicines: Array<{
+            name: string;
+            dosage: string;
+            duration: string;
+        }>;
+        instructions?: string;
+    };
+    paymentStatus: 'pending' | 'completed' | 'refunded';
+    updatedAt: string;
+    __v: number;
 }
 
 export default function Consultations() {
@@ -32,7 +53,13 @@ export default function Consultations() {
         const fetchConsultations = async () => {
             try {
                 const response = await adminApi.getAllConsultations()
-                setConsultations(response)
+                console.log('response', response);
+
+                if (response.data) {
+                    setConsultations(response.data)
+                } else {
+                    setConsultations(response)
+                }
             } catch (error) {
                 console.error('Error fetching consultations:', error)
             } finally {
@@ -80,7 +107,7 @@ export default function Consultations() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {consultations.map((consultation) => (
+                        {consultations && consultations.length > 0 && consultations.map((consultation) => (
                             <TableRow key={consultation._id}>
                                 <TableCell>{consultation.patient.name}</TableCell>
                                 <TableCell>Dr. {consultation.doctorId}</TableCell>

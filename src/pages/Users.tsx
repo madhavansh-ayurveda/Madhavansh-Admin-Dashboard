@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
-import { adminApi, User } from '@/api/adminApi'
+import { adminApi } from '@/api/adminApi'
+import { User } from '@/types'
 import { Card } from '@/components/ui/card'
-import { 
-    Table, 
-    TableBody, 
-    TableCell, 
-    TableHead, 
-    TableHeader, 
-    TableRow 
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow
 } from '@/components/ui/table'
 
 export default function Users() {
@@ -19,6 +20,8 @@ export default function Users() {
             try {
                 console.log('fetching users')
                 const data = await adminApi.getAllUsers()
+                console.log(data);
+
                 setUsers(data)
             } catch (error) {
                 console.error('Error fetching users:', error)
@@ -44,9 +47,8 @@ export default function Users() {
                         <TableRow>
                             <TableHead>Name</TableHead>
                             <TableHead>Email</TableHead>
-                            <TableHead>Phone</TableHead>
+                            <TableHead>Contact</TableHead>
                             <TableHead>Age</TableHead>
-                            <TableHead>Role</TableHead>
                             <TableHead>Joined</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -54,11 +56,11 @@ export default function Users() {
                         {users.map((user) => (
                             <TableRow key={user._id}>
                                 <TableCell>{user.name}</TableCell>
-                                <TableCell>{user.email}</TableCell>
-                                <TableCell>{user.phone}</TableCell>
-                                <TableCell>{user.age}</TableCell>
-                                <TableCell>{user.role}</TableCell>
+                                <TableCell>{user.email || " NA "}</TableCell>
+                                <TableCell>{user.contact}</TableCell>
+                                <TableCell>{user.age || " NA "}</TableCell>
                                 <TableCell>
+                                    {/* {new Date(user.createdAt).toLocaleDateString()} */}
                                     {new Date(user.createdAt).toLocaleDateString()}
                                 </TableCell>
                             </TableRow>
