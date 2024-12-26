@@ -47,6 +47,8 @@ export default function Dashboard() {
 
     const statCards = [
         { name: 'Total Patients', value: stats?.totalPatients || 0, icon: Users },
+        { name: 'Total Active Patients', value: stats?.totalActivePatients || 0, icon: Users },
+        { name: 'Total One Time Patients', value: stats?.totalOneTimePatients || 0, icon: Users },
         { name: 'Active Doctors', value: stats?.totalDoctors || 0, icon: Stethoscope },
         { name: 'Consultations', value: stats?.totalConsultations || 0, icon: Calendar },
         { name: 'Revenue', value: `₹${(stats?.totalRevenue || 0).toLocaleString()}`, icon: IndianRupee },

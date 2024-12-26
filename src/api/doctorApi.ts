@@ -23,8 +23,8 @@ export interface ApiResponse {
 }
 
 export interface Availability {
-    day: string
-    slots: Slot[]
+    days: string[]
+    slots: Slot[][]
     _id?: string
 }
 
@@ -37,7 +37,7 @@ export interface Doctor {
     qualification: string
     experience: number
     registrationNumber: string
-    availability: Availability[]
+    availability: Availability
     status: 'active' | 'inactive' | 'on-leave'
     profileImage?: string
     createdAt?: string
@@ -45,7 +45,18 @@ export interface Doctor {
     __v?: number
 }
 
-export type CreateDoctorDto = Omit<Doctor, '_id' | 'createdAt' | 'updatedAt'>
+export type CreateDoctorDto = {
+    name: string
+    email: string
+    phone: string
+    specialization: 'Ayurveda' | 'Panchakarma' | 'Yoga' | 'General'
+    qualification: string
+    status: 'active' | 'inactive' | 'on-leave'
+    experience: number
+    registrationNumber: string
+    availability: Availability
+    profileImage?: string
+}
 
 export const doctorApi = {
     getAllDoctors: async (): Promise<ApiResponse> => {
@@ -80,8 +91,8 @@ export const doctorApi = {
         await axiosInstance.delete(`/doctors/${id}`);
     },
 
-    updateDoctor: async (id: string, doctorData: Partial<CreateDoctorDto>): Promise<Doctor> => {
-        const response = await axiosInstance.patch(`/doctors/${id}`, doctorData);
-        return response.data;
+    updateDoctor: async (id: string, data: CreateDoctorDto): Promise<Doctor> => {
+        const response = await axiosInstance.put(`/doctors/${id}`, data);
+        return response.data.data;
     }
 }; 

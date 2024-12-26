@@ -17,6 +17,8 @@ export interface DashboardStats {
     totalDoctors: number;
     totalConsultations: number;
     totalRevenue: number;
+    totalActivePatients: number;
+    totalOneTimePatients: number;
 }
 
 

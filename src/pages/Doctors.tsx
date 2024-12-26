@@ -1,12 +1,20 @@
 import { useState, useEffect } from 'react'
 import { doctorApi, type Doctor, type CreateDoctorDto } from '@/api/doctorApi'
 import AddDoctorForm from '@/components/doctors/AddDoctorForm'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 
 export default function Doctors() {
     const [showAddForm, setShowAddForm] = useState(false)
     const [doctors, setDoctors] = useState<Doctor[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null)
 
     useEffect(() => {
         fetchDoctors()
@@ -35,6 +43,20 @@ export default function Doctors() {
         } catch (err) {
             console.error('Error adding doctor:', err)
             // You might want to show an error message to the user here
+        }
+    }
+
+    const handleUpdateDoctor = async (data: CreateDoctorDto) => {
+        try {
+            if (!editingDoctor?._id) return;
+            const updatedDoctor = await doctorApi.updateDoctor(editingDoctor._id, data);
+            setDoctors(prev => prev.map(doc => 
+                doc._id === updatedDoctor._id ? updatedDoctor : doc
+            ));
+            setEditingDoctor(null);
+        } catch (err) {
+            console.error('Error updating doctor:', err);
+            // Add error handling here
         }
     }
 
@@ -68,12 +90,33 @@ export default function Doctors() {
                 </button>
             </div>
 
-            {showAddForm && (
-                <AddDoctorForm
-                    onSubmit={handleAddDoctor}
-                    onCancel={() => setShowAddForm(false)}
-                />
-            )}
+            <Dialog open={showAddForm} onOpenChange={setShowAddForm}>
+                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Add New Doctor</DialogTitle>
+                    </DialogHeader>
+                    <AddDoctorForm
+                        onSubmit={handleAddDoctor}
+                        onCancel={() => setShowAddForm(false)}
+                    />
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={!!editingDoctor} onOpenChange={(open) => !open && setEditingDoctor(null)}>
+                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Edit Doctor Details</DialogTitle>
+                    </DialogHeader>
+                    {editingDoctor && (
+                        <AddDoctorForm
+                            initialData={editingDoctor}
+                            onSubmit={handleUpdateDoctor}
+                            onCancel={() => setEditingDoctor(null)}
+                            isEditing
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
 
             <div className="mt-6 overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -84,6 +127,7 @@ export default function Doctors() {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Experience</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -94,6 +138,15 @@ export default function Doctors() {
                                 <td className="px-6 py-4 whitespace-nowrap">{doctor.email}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">{doctor.phone}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">{doctor.experience}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setEditingDoctor(doctor)}
+                                    >
+                                        Edit
+                                    </Button>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
