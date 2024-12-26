@@ -23,11 +23,6 @@ export const authAdminApi = {
       console.log("Login response:", response);
 
       if (response.data.token) {
-        localStorage.setItem("admin-token", response.data.token);
-        Cookies.set("admin-token", response.data.token, {
-          expires: 7,
-          path: "/",
-        });
         api.defaults.headers.common[
           "Authorization"
         ] = `Bearer ${response.data.token}`;

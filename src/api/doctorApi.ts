@@ -1,14 +1,4 @@
-import axios from "axios";
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
-const axiosInstance = axios.create({
-    baseURL: `${API_URL}/api`,
-    withCredentials: true,
-    headers: {
-        'Content-Type': 'application/json'
-    }
-});
+import { api } from "./axios"
 
 export interface Slot {
     startTime: string
@@ -60,22 +50,22 @@ export type CreateDoctorDto = {
 
 export const doctorApi = {
     getAllDoctors: async (): Promise<ApiResponse> => {
-        const response = await axiosInstance.get('/doctors');
+        const response = await api.get('/doctors');
         return response.data;
     },
 
     getDoctorById: async (id: string): Promise<Doctor> => {
-        const response = await axiosInstance.get(`/doctors/${id}`);
+        const response = await api.get(`/doctors/${id}`);
         return response.data;
     },
 
     createDoctor: async (doctorData: CreateDoctorDto): Promise<Doctor> => {
-        const response = await axiosInstance.post('/doctors', doctorData);
+        const response = await api.post('/doctors', doctorData);
         return response.data;
     },
 
     updateDoctorStatus: async (id: string, status: string): Promise<Doctor> => {
-        const response = await axiosInstance.patch(`/doctors/${id}/status`, { status });
+        const response = await api.patch(`/doctors/${id}/status`, { status });
         return response.data;
     },
 
@@ -83,16 +73,16 @@ export const doctorApi = {
         id: string,
         availability: Doctor['availability']
     ): Promise<Doctor> => {
-        const response = await axiosInstance.patch(`/doctors/${id}/availability`, { availability });
+        const response = await api.patch(`/doctors/${id}/availability`, { availability });
         return response.data;
     },
 
     deleteDoctor: async (id: string): Promise<void> => {
-        await axiosInstance.delete(`/doctors/${id}`);
+        await api.delete(`/doctors/${id}`);
     },
 
     updateDoctor: async (id: string, data: CreateDoctorDto): Promise<Doctor> => {
-        const response = await axiosInstance.put(`/doctors/${id}`, data);
+        const response = await api.put(`/admin/doctors/${id}`, data);
         return response.data.data;
     }
 }; 
