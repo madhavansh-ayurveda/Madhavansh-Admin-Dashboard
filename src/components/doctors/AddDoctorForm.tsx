@@ -1,15 +1,39 @@
-import { useState } from "react";
-import type { CreateDoctorDto, Doctor } from "@/api/doctorApi";
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { CreateDoctorDto, Doctor } from "../../api/doctorApi";
+import { doctorApi } from "../../api/doctorApi";
+import { useToast } from "../../hooks/use-toast";
+import { Button } from "../../components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormLabel,
+  FormMessage,
+} from "../../components/ui/form";
+import { Input } from "../../components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../components/ui/select";
 
 interface AddDoctorFormProps {
-  onSubmit: (data: CreateDoctorDto) => Promise<void>;
-  onCancel: () => void;
   initialData?: Doctor;
-  isEditing?: boolean;
+  onSuccess?: (doctor: Doctor) => void;
+  mode?: "create" | "edit";
 }
 
-const SPECIALIZATIONS = ["Ayurveda", "Panchakarma", "Yoga", "General"];
-const DAYS = [
+const specializationOptions = ["Ayurveda", "Panchakarma", "Yoga", "General"];
+const daysOfWeek = [
   "Monday",
   "Tuesday",
   "Wednesday",
@@ -18,388 +42,408 @@ const DAYS = [
   "Saturday",
   "Sunday",
 ];
+const statusOptions = ["active", "inactive", "on-leave"];
 
-export default function AddDoctorForm({
-  onSubmit,
-  onCancel,
+// First, define the status type
+type DoctorStatus = "active" | "inactive" | "on-leave";
+
+// Add this type
+type Specialization = 'Ayurveda' | 'Panchakarma' | 'Yoga' | 'General';
+
+interface TimeSlot {
+  startTime: string;
+  endTime: string;
+  isBooked?: boolean;
+}
+
+export function AddDoctorForm({
   initialData,
-  isEditing = false,
+  onSuccess,
+  mode = "create",
 }: AddDoctorFormProps) {
-  const [formData, setFormData] = useState<CreateDoctorDto>(() => {
-    if (initialData) {
-      return {
-        ...initialData,
-        availability: {
-          days: initialData.availability?.days || [],
-          slots: initialData.availability?.slots || [],
-        }
-      };
-    }
-    return {
-      name: "",
-      email: "",
-      phone: "",
-      specialization: "Ayurveda",
-      qualification: "",
-      experience: 0,
-      registrationNumber: "",
-      status: "active",
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedSpecializations, setSelectedSpecializations] = useState<
+    string[]
+  >(initialData?.specialization || []);
+  const [selectedDays, setSelectedDays] = useState<string[]>(
+    initialData?.availability?.days || []
+  );
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[][]>(
+    initialData?.availability?.slots || []
+  );
+
+  const form = useForm<CreateDoctorDto>({
+    defaultValues: {
+      name: initialData?.name || "",
+      email: initialData?.email || "",
+      phone: initialData?.phone || "",
+      specialization: initialData?.specialization || [],
+      qualification: initialData?.qualification || "",
+      experience: initialData?.experience || 0,
+      registrationNumber: initialData?.registrationNumber || "",
+      status: initialData?.status || "active",
       availability: {
-        days: [],
-        slots: [],
+        days: initialData?.availability?.days || [],
+        slots: initialData?.availability?.slots || [],
       },
-      profileImage: "",
-    };
+      profileImage: initialData?.profileImage || "",
+    },
   });
 
-  const [availabilityInputs, setAvailabilityInputs] = useState<
-    Record<string, Array<{ startTime: string; endTime: string }>>
-  >(() => {
-    if (initialData?.availability?.days) {
-      const availability = initialData.availability;
-      const inputs: Record<string, Array<{ startTime: string; endTime: string }>> = {};
-      
-      if (Array.isArray(availability.days) && Array.isArray(availability.slots)) {
-        availability.days.forEach((day, index) => {
-          inputs[day] = availability.slots[index] || [];
-        });
-        return inputs;
+  // Update form when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      form.reset({
+        name: initialData.name,
+        email: initialData.email,
+        phone: initialData.phone,
+        specialization: initialData.specialization,
+        qualification: initialData.qualification,
+        experience: initialData.experience,
+        registrationNumber: initialData.registrationNumber,
+        status: initialData.status,
+        availability: initialData.availability,
+        profileImage: initialData.profileImage,
+      });
+      setSelectedSpecializations(initialData.specialization);
+      setSelectedDays(initialData.availability.days);
+      setTimeSlots(initialData.availability.slots);
+    }
+  }, [initialData, form]);
+
+  const handleAddTimeSlot = (dayIndex: number) => {
+    setTimeSlots(prev => {
+      const newSlots = [...prev];
+      if (!newSlots[dayIndex]) {
+        newSlots[dayIndex] = [];
       }
-    }
-    return {
-      Monday: [{ startTime: "", endTime: "" }],
-    };
-  });
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleAvailabilityChange = (oldDay: string, newDay: string) => {
-    const newAvailability = { ...availabilityInputs };
-    const slots = newAvailability[oldDay];
-    delete newAvailability[oldDay];
-    newAvailability[newDay] = slots;
-    setAvailabilityInputs(newAvailability);
-  };
-
-  const handleSlotChange = (
-    day: string,
-    slotIndex: number,
-    field: "startTime" | "endTime",
-    value: string
-  ) => {
-    const newAvailability = { ...availabilityInputs };
-    newAvailability[day][slotIndex][field] = value;
-    setAvailabilityInputs(newAvailability);
-  };
-
-  const addSlot = (day: string) => {
-    const newAvailability = { ...availabilityInputs };
-    newAvailability[day] = [
-      ...newAvailability[day],
-      { startTime: "", endTime: "" },
-    ];
-    setAvailabilityInputs(newAvailability);
-  };
-
-  const addDay = () => {
-    const availableDays = DAYS.filter((day) => !availabilityInputs[day]);
-    if (availableDays.length > 0) {
-      const newAvailability = { ...availabilityInputs };
-      newAvailability[availableDays[0]] = [{ startTime: "", endTime: "" }];
-      setAvailabilityInputs(newAvailability);
-    }
-  };
-
-  const deleteDay = (day: string) => {
-    const newAvailability = { ...availabilityInputs };
-    delete newAvailability[day];
-    setAvailabilityInputs(newAvailability);
-  };
-
-  const deleteSlot = (day: string, slotIndex: number) => {
-    const newAvailability = { ...availabilityInputs };
-    newAvailability[day] = newAvailability[day].filter(
-      (_, index) => index !== slotIndex
-    );
-    if (newAvailability[day].length === 0) {
-      delete newAvailability[day];
-    }
-    setAvailabilityInputs(newAvailability);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const days: string[] = [];
-    const slots: Array<Array<{ startTime: string; endTime: string }>> = [];
-
-    Object.entries(availabilityInputs).forEach(([day, daySlots]) => {
-      days.push(day);
-      slots.push(daySlots);
+      newSlots[dayIndex] = [...newSlots[dayIndex], { startTime: "09:00", endTime: "17:00", isBooked: false }];
+      return newSlots;
     });
-    console.log({ days, slots });
+  };
 
-    const finalFormData = {
-      ...formData,
-      availability: [{ days, slots }],
-    };
-    console.log("finalFormData", finalFormData);
-
-    const formattedAvailability = {
-      days: finalFormData.availability[0].days,
-      slots: finalFormData.availability[0].slots
-    };
-
-    await onSubmit({
-      ...formData,
-      availability: formattedAvailability
+  const handleRemoveTimeSlot = (dayIndex: number, slotIndex: number) => {
+    setTimeSlots(prev => {
+      const newSlots = [...prev];
+      newSlots[dayIndex] = newSlots[dayIndex].filter((_, i) => i !== slotIndex);
+      return newSlots;
     });
+  };
+
+  const handleTimeSlotChange = (dayIndex: number, slotIndex: number, field: 'startTime' | 'endTime', value: string) => {
+    setTimeSlots(prev => {
+      const newSlots = [...prev];
+      newSlots[dayIndex] = newSlots[dayIndex].map((slot, i) => 
+        i === slotIndex ? { ...slot, [field]: value } : slot
+      );
+      return newSlots;
+    });
+  };
+
+  // Update form when slots change
+  useEffect(() => {
+    form.setValue("availability.slots", timeSlots);
+  }, [timeSlots]);
+
+  const onSubmit = async (data: CreateDoctorDto) => {
+    try {
+      setIsLoading(true);
+      let response: Doctor;
+
+      if (mode === "edit" && initialData?._id) {
+        response = {
+          ...data,
+          _id: initialData._id,
+        };
+        toast({
+          title: "Success",
+          description: "Doctor updated successfully",
+        });
+      } else {
+        response = await doctorApi.createDoctor(data);
+        toast({
+          title: "Success",
+          description: "Doctor added successfully",
+        });
+      }
+
+      if (onSuccess) {
+        onSuccess(response);
+      }
+
+      if (mode === "create") {
+        form.reset();
+        setSelectedSpecializations([]);
+        setSelectedDays([]);
+        setTimeSlots([]);
+      }
+    } catch (error: any) {
+      // Extract error message from the API response
+      const errorMessage = error.response?.data?.message || 
+                          error.message || 
+                          'Failed to process doctor data';
+      
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: errorMessage,
+      });
+      
+      // Log the full error for debugging
+      console.error('Form submission error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Name
-          </label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Email
-          </label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Phone
-          </label>
-          <input
-            type="tel"
-            name="phone"
-            value={formData.phone}
-            onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Specialization
-          </label>
-          <select
-            name="specialization"
-            value={formData.specialization}
-            onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-            required
-          >
-            {SPECIALIZATIONS.map((spec) => (
-              <option key={spec} value={spec}>
-                {spec}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Qualification
-          </label>
-          <input
-            type="text"
-            name="qualification"
-            value={formData.qualification}
-            onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Experience (years)
-          </label>
-          <input
-            type="number"
-            name="experience"
-            value={formData.experience}
-            onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-            required
-            min="0"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Registration Number
-          </label>
-          <input
-            type="text"
-            name="registrationNumber"
-            value={formData.registrationNumber}
-            onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Status
-          </label>
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleInputChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-          >
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="on-leave">On Leave</option>
-          </select>
-        </div>
-      </div>
-
-      <div className="mt-6">
-        <h3 className="text-lg font-medium text-gray-700">Availability</h3>
-        {Object.entries(availabilityInputs).map(([day, slots]) => (
-          <div key={day} className="mt-4 p-4 border rounded-md">
-            <div className="flex justify-between items-center">
-              <select
-                value={day}
-                onChange={(e) => handleAvailabilityChange(day, e.target.value)}
-                className="w-full md:w-auto rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-              >
-                {DAYS.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => deleteDay(day)}
-                className="text-red-600 hover:text-red-700"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </button>
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle>
+          {mode === "edit" ? "Edit Doctor" : "Add New Doctor"}
+        </CardTitle>
+        <CardDescription>
+          {mode === "edit"
+            ? "Update the doctor's details below"
+            : "Enter the doctor's details below"}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Name */}
+            <div>
+              <FormLabel htmlFor="name">Name</FormLabel>
+              <FormControl>
+                <Input
+                  id="name"
+                  {...form.register("name")}
+                  placeholder="Dr. John Doe"
+                  required
+                />
+              </FormControl>
+              <FormMessage />
             </div>
 
-            {slots.map((slot, slotIndex) => (
-              <div key={slotIndex} className="mt-2 flex gap-2 items-center">
-                <input
-                  type="time"
-                  value={slot.startTime}
-                  onChange={(e) =>
-                    handleSlotChange(
-                      day,
-                      slotIndex,
-                      "startTime",
-                      e.target.value
-                    )
-                  }
-                  className="rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+            {/* Email */}
+            <div>
+              <FormLabel htmlFor="email">Email</FormLabel>
+              <FormControl>
+                <Input
+                  id="email"
+                  type="email"
+                  {...form.register("email")}
+                  placeholder="doctor@example.com"
+                  required
                 />
-                <input
-                  type="time"
-                  value={slot.endTime}
-                  onChange={(e) =>
-                    handleSlotChange(day, slotIndex, "endTime", e.target.value)
-                  }
-                  className="rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                />
-                <button
-                  type="button"
-                  onClick={() => deleteSlot(day, slotIndex)}
-                  className="text-red-600 hover:text-red-700"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </button>
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={() => addSlot(day)}
-              className="mt-2 text-sm text-primary-600 hover:text-primary-700"
-            >
-              + Add Slot
-            </button>
-          </div>
-        ))}
-        <button
-          type="button"
-          onClick={addDay}
-          className="mt-2 text-sm text-primary-600 hover:text-primary-700"
-          disabled={Object.keys(availabilityInputs).length === DAYS.length}
-        >
-          + Add Day
-        </button>
-      </div>
+              </FormControl>
+              <FormMessage />
+            </div>
 
-      <div className="mt-6 flex justify-end gap-4">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700"
-        >
-          {isEditing ? 'Update Doctor' : 'Add Doctor'}
-        </button>
-      </div>
-    </form>
+            {/* Phone */}
+            <div>
+              <FormLabel htmlFor="phone">Phone</FormLabel>
+              <FormControl>
+                <Input
+                  id="phone"
+                  {...form.register("phone")}
+                  placeholder="+91 9876543210"
+                  required
+                />
+              </FormControl>
+              <FormMessage />
+            </div>
+
+            {/* Specializations */}
+            <div>
+              <FormLabel>Specializations</FormLabel>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {specializationOptions.map((spec) => (
+                  <label key={spec} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedSpecializations.includes(spec)}
+                      onChange={() => {
+                        let newSpecializations;
+                        if (selectedSpecializations.includes(spec)) {
+                          newSpecializations = selectedSpecializations.filter(
+                            (item) => item !== spec
+                          );
+                        } else {
+                          newSpecializations = [...selectedSpecializations, spec];
+                        }
+                        setSelectedSpecializations(newSpecializations);
+                        form.setValue("specialization", newSpecializations as Specialization[]);
+                      }}
+                      className="rounded border-gray-300"
+                    />
+                    <span>{spec}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Qualification */}
+            <div>
+              <FormLabel htmlFor="qualification">Qualification</FormLabel>
+              <FormControl>
+                <Input
+                  id="qualification"
+                  {...form.register("qualification")}
+                  placeholder="BAMS, MD"
+                />
+              </FormControl>
+              <FormMessage />
+            </div>
+
+            {/* Experience */}
+            <div>
+              <FormLabel htmlFor="experience">Experience (years)</FormLabel>
+              <FormControl>
+                <Input
+                  id="experience"
+                  type="number"
+                  min="0"
+                  {...form.register("experience")}
+                  required
+                />
+              </FormControl>
+              <FormMessage />
+            </div>
+
+            {/* Registration Number */}
+            <div>
+              <FormLabel htmlFor="registrationNumber">
+                Registration Number
+              </FormLabel>
+              <FormControl>
+                <Input
+                  id="registrationNumber"
+                  {...form.register("registrationNumber")}
+                  placeholder="REG123456"
+                  required
+                />
+              </FormControl>
+              <FormMessage />
+            </div>
+
+            {/* Status */}
+            <div>
+              <FormLabel htmlFor="status">Status</FormLabel>
+              <FormControl>
+                <Select
+                  value={form.watch("status")}
+                  onValueChange={(value: DoctorStatus) => {
+                    form.setValue("status", value);
+                  }}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statusOptions.map((status) => (
+                      <SelectItem key={status} value={status as DoctorStatus}>
+                        {status}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormMessage />
+            </div>
+
+            {/* Available Days */}
+            <div>
+              <FormLabel>Available Days</FormLabel>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {daysOfWeek.map((day) => (
+                  <label key={day} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedDays.includes(day)}
+                      onChange={() => {
+                        let newDays;
+                        if (selectedDays.includes(day)) {
+                          newDays = selectedDays.filter((item) => item !== day);
+                        } else {
+                          newDays = [...selectedDays, day];
+                        }
+                        setSelectedDays(newDays);
+                        form.setValue("availability.days", newDays);
+                      }}
+                      className="rounded border-gray-300"
+                    />
+                    <span>{day}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Time Slots */}
+            <div>
+              {selectedDays.map((day, dayIndex) => (
+                <div key={day} className="mt-4 p-4 border rounded-md">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-medium">{day}</h3>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleAddTimeSlot(dayIndex)}
+                    >
+                      Add Time Slot
+                    </Button>
+                  </div>
+                  
+                  {(timeSlots[dayIndex] || []).map((slot, slotIndex) => (
+                    <div key={slotIndex} className="flex gap-4 items-center mt-2">
+                      <div className="flex-1">
+                        <FormLabel>Start Time</FormLabel>
+                        <Input
+                          type="time"
+                          value={slot.startTime}
+                          onChange={(e) => handleTimeSlotChange(dayIndex, slotIndex, 'startTime', e.target.value)}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <FormLabel>End Time</FormLabel>
+                        <Input
+                          type="time"
+                          value={slot.endTime}
+                          onChange={(e) => handleTimeSlotChange(dayIndex, slotIndex, 'endTime', e.target.value)}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="mt-6"
+                        onClick={() => handleRemoveTimeSlot(dayIndex, slotIndex)}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading
+                ? mode === "edit"
+                  ? "Updating Doctor..."
+                  : "Adding Doctor..."
+                : mode === "edit"
+                ? "Update Doctor"
+                : "Add Doctor"}
+            </Button>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
   );
 }
+
+export default AddDoctorForm;

@@ -23,7 +23,7 @@ export interface Doctor {
     name: string
     email: string
     phone: string
-    specialization: 'Ayurveda' | 'Panchakarma' | 'Yoga' | 'General'
+    specialization: ('Ayurveda' | 'Panchakarma' | 'Yoga' | 'General')[]
     qualification: string
     experience: number
     registrationNumber: string
@@ -39,7 +39,7 @@ export type CreateDoctorDto = {
     name: string
     email: string
     phone: string
-    specialization: 'Ayurveda' | 'Panchakarma' | 'Yoga' | 'General'
+    specialization: ('Ayurveda' | 'Panchakarma' | 'Yoga' | 'General')[]
     qualification: string
     status: 'active' | 'inactive' | 'on-leave'
     experience: number
