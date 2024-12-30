@@ -4,7 +4,7 @@ import { AdminApi } from './axios';
 export const adminApi = {
     getAllUsers: async (): Promise<User[]> => {
         const response = await AdminApi.get('/users');
-        // console.log(response.data.data)
+        console.log(response)
         return response.data.data;
     },
 

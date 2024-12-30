@@ -30,6 +30,9 @@ interface AddDoctorFormProps {
   initialData?: Doctor;
   onSuccess?: (doctor: Doctor) => void;
   mode?: "create" | "edit";
+  onSubmit: (data: CreateDoctorDto) => Promise<void>;
+  onCancel: () => void;
+  isEditing?: boolean;
 }
 
 const specializationOptions = ["Ayurveda", "Panchakarma", "Yoga", "General"];

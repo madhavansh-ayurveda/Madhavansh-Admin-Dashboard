@@ -53,7 +53,7 @@ export default function Users() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {users.map((user) => (
+                        {users?.map((user) => (
                             <TableRow key={user._id}>
                                 <TableCell>{user.name}</TableCell>
                                 <TableCell>{user.email || " NA "}</TableCell>

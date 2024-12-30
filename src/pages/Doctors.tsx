@@ -131,7 +131,7 @@ export default function Doctors() {
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {doctors.length > 0 && doctors.map(doctor => (
+                        {doctors?.length > 0 && doctors.map(doctor => (
                             <tr key={doctor._id} className="hover:bg-gray-50">
                                 <td className="px-6 py-4 whitespace-nowrap">{doctor.name}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">{doctor.specialization}</td>
