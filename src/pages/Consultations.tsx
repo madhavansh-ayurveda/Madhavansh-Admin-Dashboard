@@ -26,6 +26,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Trash2 } from "lucide-react";
+import { 
+  setCacheData, 
+  selectCacheData, 
+  clearCacheByPrefix,
+  CACHE_DURATIONS 
+} from '@/store/cacheSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '@/store';
 
 interface ApiResponse {
   success: boolean;
@@ -48,6 +57,7 @@ interface Consultation {
     doctorName: string;
     doctorId: string;
   };
+  contact: string;
   date: string;
   timeSlot: string;
   symptoms: string;
@@ -65,18 +75,48 @@ interface Consultation {
 export default function Consultations() {
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingConsultation, setEditingConsultation] = useState<Consultation | null>(null);
+  const [editingConsultation, setEditingConsultation] =
+    useState<Consultation | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+
+  const dispatch = useDispatch();
+  const cacheKey = `consultations_page_${currentPage}_search_${searchTerm}`;
+  const cachedData = useSelector((state: RootState) => 
+    selectCacheData(state, cacheKey, CACHE_DURATIONS.CONSULTATIONS)
+  );
+
+  const handleDeleteConsultation = async (id: string, contact: string) => {
+    const response = await adminApi.deleteConsultation(id, contact);
+    console.log(response);
+
+    if (response.success) {
+      setConsultations((prevConsultations) =>
+        prevConsultations.filter((consultation) => consultation._id !== id)
+      );
+    }
+  };
 
   useEffect(() => {
     const fetchConsultations = async () => {
+      if (cachedData) {
+        setConsultations(cachedData.data);
+        setLoading(false);
+        return;
+      }
+
       try {
-        const response: ApiResponse = await adminApi.getAllConsultations();
-        console.log("response", response);
+        setLoading(true);
+        const response = await adminApi.getAllConsultations();
 
         if (response.data) {
           setConsultations(response.data);
-        } else {
-          setConsultations([]);
+          dispatch(setCacheData({
+            key: cacheKey,
+            data: response.data,
+            count: response.count
+          }));
         }
       } catch (error) {
         console.error("Error fetching consultations:", error);
@@ -86,7 +126,21 @@ export default function Consultations() {
     };
 
     fetchConsultations();
-  }, []);
+  }, [currentPage, searchTerm, dispatch]);
+
+  // Filter consultations based on search term across all fields
+  const filteredConsultations = consultations.filter(consultation => 
+    consultation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    consultation.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    consultation.doctor.doctorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    consultation.consultationType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    consultation.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    consultation.amount.toString().includes(searchTerm) // Check amount as a string
+  );
+
+  const indexOfLastConsultation = currentPage * itemsPerPage;
+  const indexOfFirstConsultation = indexOfLastConsultation - itemsPerPage;
+  const currentConsultations = filteredConsultations.slice(indexOfFirstConsultation, indexOfLastConsultation);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -103,10 +157,7 @@ export default function Consultations() {
     }
   };
 
-  const handleInputChange = (
-    field: keyof Consultation,
-    value: any
-  ) => {
+  const handleInputChange = (field: keyof Consultation, value: any) => {
     if (editingConsultation) {
       setEditingConsultation({
         ...editingConsultation,
@@ -119,9 +170,14 @@ export default function Consultations() {
     if (!editingConsultation) return;
 
     try {
-      await adminApi.updateConsultation(editingConsultation._id, editingConsultation);
-      // Refresh the consultations list
-      const response: ApiResponse = await adminApi.getAllConsultations();
+      await adminApi.updateConsultation(
+        editingConsultation._id,
+        editingConsultation
+      );
+      dispatch(clearCacheByPrefix('consultations_')); // Clear all consultation-related cache
+      
+      // Refresh the data
+      const response = await adminApi.getAllConsultations();
       if (response.data) {
         setConsultations(response.data);
       }
@@ -138,6 +194,12 @@ export default function Consultations() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">Consultations Management</h1>
+      <Input 
+        type="text" 
+        placeholder="Search Consultations" 
+        value={searchTerm} 
+        onChange={(e) => setSearchTerm(e.target.value)} 
+      />
 
       <Card>
         <Table>
@@ -153,30 +215,22 @@ export default function Consultations() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {consultations &&
-              consultations.length > 0 &&
-              consultations.map((consultation) => (
+            {currentConsultations &&
+              currentConsultations.length > 0 &&
+              currentConsultations.map((consultation) => (
                 <TableRow key={consultation._id}>
                   <TableCell>{consultation.name || "N/A"}</TableCell>
-                  <TableCell>
-                    Dr. {consultation.doctor.doctorName || "N/A"}
-                  </TableCell>
+                  <TableCell>Dr. {consultation.doctor.doctorName || "N/A"}</TableCell>
                   <TableCell>{consultation.consultationType}</TableCell>
-                  <TableCell>
-                    {new Date(consultation.date).toLocaleDateString()}
-                  </TableCell>
+                  <TableCell>{new Date(consultation.date).toLocaleDateString()}</TableCell>
                   <TableCell>{consultation.timeSlot}</TableCell>
                   <TableCell>
-                    <span
-                      className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                        consultation.status
-                      )}`}
-                    >
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(consultation.status)}`}>
                       {consultation.status}
                     </span>
                   </TableCell>
                   <TableCell>₹{consultation.amount}</TableCell>
-                  <TableCell>
+                  <TableCell className="flex gap-8 items-center">
                     <Dialog>
                       <DialogTrigger asChild>
                         <Button
@@ -199,7 +253,9 @@ export default function Consultations() {
                                 <Input
                                   className="col-span-3"
                                   value={editingConsultation?.name || ""}
-                                  onChange={(e) => handleInputChange("name", e.target.value)}
+                                  onChange={(e) =>
+                                    handleInputChange("name", e.target.value)
+                                  }
                                 />
                               </div>
                               <div className="grid grid-cols-4 items-center gap-4">
@@ -207,7 +263,9 @@ export default function Consultations() {
                                 <Input
                                   className="col-span-3"
                                   value={editingConsultation?.email || ""}
-                                  onChange={(e) => handleInputChange("email", e.target.value)}
+                                  onChange={(e) =>
+                                    handleInputChange("email", e.target.value)
+                                  }
                                 />
                               </div>
                               <div className="grid grid-cols-4 items-center gap-4">
@@ -216,7 +274,12 @@ export default function Consultations() {
                                   type="number"
                                   className="col-span-3"
                                   value={editingConsultation?.amount || 0}
-                                  onChange={(e) => handleInputChange("amount", parseInt(e.target.value))}
+                                  onChange={(e) =>
+                                    handleInputChange(
+                                      "amount",
+                                      parseInt(e.target.value)
+                                    )
+                                  }
                                 />
                               </div>
                               <div className="grid grid-cols-4 items-center gap-4">
@@ -224,8 +287,13 @@ export default function Consultations() {
                                 <Input
                                   type="date"
                                   className="col-span-3"
-                                  value={editingConsultation?.date.split('T')[0] || ""}
-                                  onChange={(e) => handleInputChange("date", e.target.value)}
+                                  value={
+                                    editingConsultation?.date.split("T")[0] ||
+                                    ""
+                                  }
+                                  onChange={(e) =>
+                                    handleInputChange("date", e.target.value)
+                                  }
                                 />
                               </div>
                             </div>
@@ -236,23 +304,38 @@ export default function Consultations() {
                                 <Input
                                   className="col-span-3"
                                   value={editingConsultation?.timeSlot || ""}
-                                  onChange={(e) => handleInputChange("timeSlot", e.target.value)}
+                                  onChange={(e) =>
+                                    handleInputChange(
+                                      "timeSlot",
+                                      e.target.value
+                                    )
+                                  }
                                 />
                               </div>
                               <div className="grid grid-cols-4 items-center gap-4">
                                 <label>Status</label>
                                 <Select
                                   value={editingConsultation?.status}
-                                  onValueChange={(value) => handleInputChange("status", value)}
+                                  onValueChange={(value) =>
+                                    handleInputChange("status", value)
+                                  }
                                 >
                                   <SelectTrigger className="col-span-3">
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="pending">Pending</SelectItem>
-                                    <SelectItem value="confirmed">Confirmed</SelectItem>
-                                    <SelectItem value="completed">Completed</SelectItem>
-                                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                                    <SelectItem value="pending">
+                                      Pending
+                                    </SelectItem>
+                                    <SelectItem value="confirmed">
+                                      Confirmed
+                                    </SelectItem>
+                                    <SelectItem value="completed">
+                                      Completed
+                                    </SelectItem>
+                                    <SelectItem value="cancelled">
+                                      Cancelled
+                                    </SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
@@ -260,15 +343,23 @@ export default function Consultations() {
                                 <label>Payment Status</label>
                                 <Select
                                   value={editingConsultation?.paymentStatus}
-                                  onValueChange={(value) => handleInputChange("paymentStatus", value)}
+                                  onValueChange={(value) =>
+                                    handleInputChange("paymentStatus", value)
+                                  }
                                 >
                                   <SelectTrigger className="col-span-3">
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="pending">Pending</SelectItem>
-                                    <SelectItem value="completed">Completed</SelectItem>
-                                    <SelectItem value="refunded">Refunded</SelectItem>
+                                    <SelectItem value="pending">
+                                      Pending
+                                    </SelectItem>
+                                    <SelectItem value="completed">
+                                      Completed
+                                    </SelectItem>
+                                    <SelectItem value="refunded">
+                                      Refunded
+                                    </SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
@@ -276,16 +367,26 @@ export default function Consultations() {
                                 <label>Consultation Type</label>
                                 <Select
                                   value={editingConsultation?.consultationType}
-                                  onValueChange={(value) => handleInputChange("consultationType", value)}
+                                  onValueChange={(value) =>
+                                    handleInputChange("consultationType", value)
+                                  }
                                 >
                                   <SelectTrigger className="col-span-3">
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="General Consultation">General Consultation</SelectItem>
-                                    <SelectItem value="Follow-up">Follow-up</SelectItem>
-                                    <SelectItem value="Specific Treatment">Specific Treatment</SelectItem>
-                                    <SelectItem value="Emergency">Emergency</SelectItem>
+                                    <SelectItem value="General Consultation">
+                                      General Consultation
+                                    </SelectItem>
+                                    <SelectItem value="Follow-up">
+                                      Follow-up
+                                    </SelectItem>
+                                    <SelectItem value="Specific Treatment">
+                                      Specific Treatment
+                                    </SelectItem>
+                                    <SelectItem value="Emergency">
+                                      Emergency
+                                    </SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
@@ -299,7 +400,9 @@ export default function Consultations() {
                               <Textarea
                                 className="col-span-3"
                                 value={editingConsultation?.symptoms || ""}
-                                onChange={(e) => handleInputChange("symptoms", e.target.value)}
+                                onChange={(e) =>
+                                  handleInputChange("symptoms", e.target.value)
+                                }
                               />
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
@@ -307,14 +410,18 @@ export default function Consultations() {
                               <Textarea
                                 className="col-span-3"
                                 value={editingConsultation?.notes || ""}
-                                onChange={(e) => handleInputChange("notes", e.target.value)}
+                                onChange={(e) =>
+                                  handleInputChange("notes", e.target.value)
+                                }
                               />
                             </div>
                           </div>
 
                           {/* Prescription Section */}
                           <div className="mt-4">
-                            <h3 className="text-lg font-semibold mb-2">Prescription</h3>
+                            <h3 className="text-lg font-semibold mb-2">
+                              Prescription
+                            </h3>
                             <div className="space-y-4">
                               <div className="grid grid-cols-4 items-center gap-4">
                                 <label>Upload Prescriptions</label>
@@ -328,57 +435,81 @@ export default function Consultations() {
                                       if (files && files.length > 0) {
                                         try {
                                           const formData = new FormData();
-                                          Array.from(files).forEach(file => {
-                                            formData.append('prescriptions', file);
+                                          Array.from(files).forEach((file) => {
+                                            formData.append(
+                                              "prescriptions",
+                                              file
+                                            );
                                           });
-                                          
+
                                           // Upload the files
-                                          const response = await adminApi.uploadPrescription(editingConsultation?._id || '', formData);
-                                          
+                                          const response =
+                                            await adminApi.uploadPrescription(
+                                              editingConsultation?._id || "",
+                                              formData
+                                            );
+
                                           // Update the consultation with the new file URLs
                                           handleInputChange("prescription", {
                                             ...editingConsultation?.prescription,
                                             files: [
-                                              ...(editingConsultation?.prescription?.files || []),
-                                              ...response.fileUrls
+                                              ...(editingConsultation
+                                                ?.prescription?.files || []),
+                                              ...response.fileUrls,
                                             ],
                                           });
                                         } catch (error) {
-                                          console.error('Error uploading prescriptions:', error);
+                                          console.error(
+                                            "Error uploading prescriptions:",
+                                            error
+                                          );
                                           // Add error handling here (e.g., show a toast message)
                                         }
                                       }
                                     }}
                                   />
-                                  {editingConsultation?.prescription?.files && editingConsultation.prescription.files.length > 0 && (
-                                    <div className="mt-2 space-y-2">
-                                      {editingConsultation.prescription.files.map((fileUrl, index) => (
-                                        <div key={index} className="flex items-center gap-2">
-                                          <a 
-                                            href={fileUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-blue-600 hover:underline"
-                                          >
-                                            View Prescription {index + 1}
-                                          </a>
-                                          <Button
-                                            variant="destructive"
-                                            size="sm"
-                                            onClick={() => {
-                                              const updatedFiles = editingConsultation.prescription.files?.filter((_, i) => i !== index);
-                                              handleInputChange("prescription", {
-                                                ...editingConsultation.prescription,
-                                                files: updatedFiles,
-                                              });
-                                            }}
-                                          >
-                                            Remove
-                                          </Button>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
+                                  {editingConsultation?.prescription?.files &&
+                                    editingConsultation.prescription.files
+                                      .length > 0 && (
+                                      <div className="mt-2 space-y-2">
+                                        {editingConsultation.prescription.files.map(
+                                          (fileUrl, index) => (
+                                            <div
+                                              key={index}
+                                              className="flex items-center gap-2"
+                                            >
+                                              <a
+                                                href={fileUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-blue-600 hover:underline"
+                                              >
+                                                View Prescription {index + 1}
+                                              </a>
+                                              <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                onClick={() => {
+                                                  const updatedFiles =
+                                                    editingConsultation.prescription.files?.filter(
+                                                      (_, i) => i !== index
+                                                    );
+                                                  handleInputChange(
+                                                    "prescription",
+                                                    {
+                                                      ...editingConsultation.prescription,
+                                                      files: updatedFiles,
+                                                    }
+                                                  );
+                                                }}
+                                              >
+                                                Remove
+                                              </Button>
+                                            </div>
+                                          )
+                                        )}
+                                      </div>
+                                    )}
                                 </div>
                               </div>
 
@@ -387,7 +518,10 @@ export default function Consultations() {
                                 <label>Instructions</label>
                                 <Textarea
                                   className="col-span-3"
-                                  value={editingConsultation?.prescription?.instructions || ""}
+                                  value={
+                                    editingConsultation?.prescription
+                                      ?.instructions || ""
+                                  }
                                   onChange={(e) => {
                                     handleInputChange("prescription", {
                                       ...editingConsultation?.prescription,
@@ -401,22 +535,47 @@ export default function Consultations() {
 
                           {/* Action Buttons */}
                           <div className="flex justify-end gap-4 mt-4">
-                            <Button variant="outline" onClick={() => setEditingConsultation(null)}>
+                            <Button
+                              variant="outline"
+                              onClick={() => setEditingConsultation(null)}
+                            >
                               Cancel
                             </Button>
-                            <Button variant="default" onClick={handleUpdateConsultation}>
+                            <Button
+                              variant="default"
+                              onClick={handleUpdateConsultation}
+                            >
                               Update Consultation
                             </Button>
                           </div>
                         </div>
                       </DialogContent>
                     </Dialog>
+                    <Trash2
+                      className="text-red-500 hover:text-red-700 cursor-pointer"
+                      onClick={() =>
+                        handleDeleteConsultation(
+                          consultation._id,
+                          consultation.contact
+                        )
+                      }
+                    />
                   </TableCell>
                 </TableRow>
               ))}
+            {!currentConsultations.length && (
+              <p className="flex justify-center py-4">
+                No consultations found.
+              </p>
+            )}
           </TableBody>
         </Table>
       </Card>
+      <div className="flex justify-between">
+        <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}>Previous</button>
+        <span>Page {currentPage}</span>
+        <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredConsultations.length / itemsPerPage)))}>Next</button>
+      </div>
     </div>
   );
 }

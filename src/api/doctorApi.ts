@@ -1,4 +1,4 @@
-import { api } from "./axios"
+import { AdminApi, api } from "./axios"
 
 export interface Slot {
     startTime: string
@@ -49,8 +49,8 @@ export type CreateDoctorDto = {
 }
 
 export const doctorApi = {
-    getAllDoctors: async (): Promise<ApiResponse> => {
-        const response = await api.get('/doctors');
+    getAllDoctors: async (page = 1, limit = 10) => {
+        const response = await api.get(`/doctors?page=${page}&limit=${limit}`);
         return response.data;
     },
 
@@ -78,11 +78,11 @@ export const doctorApi = {
     },
 
     deleteDoctor: async (id: string): Promise<void> => {
-        await api.delete(`/doctors/${id}`);
+        await AdminApi.delete(`/doctors/${id}`);
     },
 
     updateDoctor: async (id: string, data: CreateDoctorDto): Promise<Doctor> => {
-        const response = await api.put(`/admin/doctors/${id}`, data);
+        const response = await api.put(`/doctors/${id}`, data);
         return response.data.data;
     }
 }; 
