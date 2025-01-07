@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { setCacheData, selectCacheData, CACHE_DURATIONS } from "@/store/cacheSlice";
 import { RootState } from "@/store";
+import { Button } from "@/components/ui/button";
 
 export default function Users() {
   const [users, setUsers] = useState<User[]>([]);
@@ -69,59 +70,67 @@ export default function Users() {
   );
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Users Management</h1>
-      <Input
-        type="text"
-        placeholder="Search Users"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-      />
+    <div className="flex flex-col min-h-screen">
+      <div className="flex-grow space-y-6 p-4">
+        <h1 className="text-xl md:text-2xl font-semibold">Users Management</h1>
+        <Input
+          type="text"
+          placeholder="Search Users"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full md:w-1/2 lg:w-1/3"
+        />
 
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead>Age</TableHead>
-              <TableHead>Joined</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredUsers?.map((user) => (
-              <TableRow key={user._id}>
-                <TableCell>{user.name}</TableCell>
-                <TableCell>{user.email || " NA "}</TableCell>
-                <TableCell>{user.contact}</TableCell>
-                <TableCell>{user.age || " NA "}</TableCell>
-                <TableCell>
-                  {new Date(user.createdAt).toLocaleDateString()}
-                </TableCell>
+        <Card className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead className="hidden sm:table-cell">Contact</TableHead>
+                <TableHead className="hidden md:table-cell">Age</TableHead>
+                <TableHead className="hidden lg:table-cell">Joined</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
-      <div className="flex justify-between mt-4">
-        <button
-          className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
-          disabled={currentPage === 1}
-          onClick={() => setCurrentPage((prev) => prev - 1)}
-        >
-          Previous
-        </button>
-        <span>
-          Page {currentPage} of {totalPages}
-        </span>
-        <button
-          className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
-          disabled={currentPage === totalPages}
-          onClick={() => setCurrentPage((prev) => prev + 1)}
-        >
-          Next
-        </button>
+            </TableHeader>
+            <TableBody>
+              {filteredUsers?.map((user) => (
+                <TableRow key={user._id} className="text-sm md:text-base">
+                  <TableCell>{user.name}</TableCell>
+                  <TableCell>{user.email || " NA "}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{user.contact}</TableCell>
+                  <TableCell className="hidden md:table-cell">{user.age || " NA "}</TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    {new Date(user.createdAt).toLocaleDateString()}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      </div>
+
+      <div className="sticky bottom-0 bg-white border-t p-4 mt-auto">
+        <div className="flex justify-between items-center max-w-screen-xl mx-auto">
+          <Button
+            variant="outline"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((prev) => prev - 1)}
+            className="text-sm md:text-base"
+          >
+            Previous
+          </Button>
+          <span className="text-sm md:text-base">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage((prev) => prev + 1)}
+            className="text-sm md:text-base"
+          >
+            Next
+          </Button>
+        </div>
       </div>
     </div>
   );

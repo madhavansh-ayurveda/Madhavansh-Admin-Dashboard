@@ -9,15 +9,15 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
-import { Input } from '@/components/ui/input'
-import { useDispatch, useSelector } from 'react-redux';
-import { 
-  setCacheData, 
-  selectCacheData, 
+import { Input } from "@/components/ui/input";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  setCacheData,
+  selectCacheData,
   clearCacheByPrefix,
-  CACHE_DURATIONS 
-} from '@/store/cacheSlice';
-import { RootState } from '@/store';
+  CACHE_DURATIONS,
+} from "@/store/cacheSlice";
+import { RootState } from "@/store";
 
 export default function Doctors() {
   const [showAddForm, setShowAddForm] = useState(false);
@@ -25,13 +25,13 @@ export default function Doctors() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-
+  const [totalPages, setTotalPages] = useState(1);
   const dispatch = useDispatch();
   const cacheKey = `doctors_page_${currentPage}_search_${searchTerm}`;
-  const cachedData = useSelector((state: RootState) => 
+  const cachedData = useSelector((state: RootState) =>
     selectCacheData(state, cacheKey, CACHE_DURATIONS.DOCTORS)
   );
 
@@ -48,12 +48,14 @@ export default function Doctors() {
         setError(null);
         const response = await doctorApi.getAllDoctors();
         setDoctors(response.data);
-        
-        dispatch(setCacheData({
-          key: cacheKey,
-          data: response.data,
-          totalPages: Math.ceil(response.data.length / itemsPerPage)
-        }));
+
+        dispatch(
+          setCacheData({
+            key: cacheKey,
+            data: response.data,
+            totalPages: Math.ceil(response.data.length / itemsPerPage),
+          })
+        );
       } catch (err) {
         setError("Failed to fetch doctors. Please try again later.");
         console.error("Error fetching doctors:", err);
@@ -66,22 +68,28 @@ export default function Doctors() {
   }, [currentPage, searchTerm, dispatch]);
 
   // Filter doctors based on search term across all fields
-  const filteredDoctors = doctors.filter(doctor => 
-    doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doctor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doctor.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doctor.specialization.some(spec => spec.toLowerCase().includes(searchTerm.toLowerCase())) // Check specialization
+  const filteredDoctors = doctors.filter(
+    (doctor) =>
+      doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doctor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doctor.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doctor.specialization.some((spec) =>
+        spec.toLowerCase().includes(searchTerm.toLowerCase())
+      ) // Check specialization
   );
 
   const indexOfLastDoctor = currentPage * itemsPerPage;
   const indexOfFirstDoctor = indexOfLastDoctor - itemsPerPage;
-  const currentDoctors = filteredDoctors.slice(indexOfFirstDoctor, indexOfLastDoctor);
+  const currentDoctors = filteredDoctors.slice(
+    indexOfFirstDoctor,
+    indexOfLastDoctor
+  );
 
   const handleAddDoctor = async (data: CreateDoctorDto) => {
     try {
       const newDoctor = await doctorApi.createDoctor(data);
       setDoctors((prev) => [newDoctor, ...prev]);
-      dispatch(clearCacheByPrefix('doctors_')); // Clear all doctor-related cache
+      dispatch(clearCacheByPrefix("doctors_")); // Clear all doctor-related cache
       setShowAddForm(false);
     } catch (err) {
       console.error("Error adding doctor:", err);
@@ -126,7 +134,7 @@ export default function Doctors() {
       <div className="text-red-600 flex justify-center items-center h-64">
         {error}
         <button
-        //   onClick={fetchDoctors}
+          //   onClick={fetchDoctors}
           className="ml-4 bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700"
         >
           Retry
@@ -136,122 +144,140 @@ export default function Doctors() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold">Doctors Management</h1>
-        <button
-          onClick={() => setShowAddForm(true)}
-          className="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700"
-        >
-          Add New Doctor
-        </button>
-      </div>
-      <Input 
-        type="text" 
-        placeholder="Search Doctors" 
-        value={searchTerm} 
-        onChange={(e) => setSearchTerm(e.target.value)} 
-      />
+    <div className="flex flex-col min-h-screen">
+      <div className="flex-grow space-y-6 p-4">
+        <div className="flex justify-between items-center">
+          <h1 className="text-xl md:text-2xl font-semibold">Doctors Management</h1>
+          <Button
+            onClick={() => setShowAddForm(true)}
+            className="bg-primary-600 text-white hover:bg-primary-700"
+          >
+            Add New Doctor
+          </Button>
+        </div>
 
-      <Dialog open={showAddForm} onOpenChange={setShowAddForm}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Add New Doctor</DialogTitle>
-          </DialogHeader>
-          <AddDoctorForm
-            onSubmit={handleAddDoctor}
-            onCancel={() => setShowAddForm(false)}
-          />
-        </DialogContent>
-      </Dialog>
+        <Input
+          type="text"
+          placeholder="Search Doctors"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full md:w-1/2 lg:w-1/3"
+        />
 
-      <Dialog
-        open={!!editingDoctor}
-        onOpenChange={(open) => !open && setEditingDoctor(null)}
-      >
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Doctor Details</DialogTitle>
-          </DialogHeader>
-          {editingDoctor && (
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                  Specialization
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                  Phone
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">
+                  Experience
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {currentDoctors?.length > 0 &&
+                currentDoctors.map((doctor) => (
+                  <tr key={doctor._id} className="hover:bg-gray-50 text-sm md:text-base">
+                    <td className="px-6 py-4 whitespace-nowrap">{doctor.name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
+                      {doctor.specialization.join(", ")}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
+                      {doctor.email}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
+                      {doctor.phone}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap hidden xl:table-cell">
+                      {doctor.experience}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex gap-4 items-center">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditingDoctor(doctor)}
+                        >
+                          Edit
+                        </Button>
+                        <Trash2
+                          className="text-red-500 cursor-pointer hover:text-red-800"
+                          onClick={() => handleDeleteDoctor(doctor._id)}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+
+        <Dialog open={showAddForm} onOpenChange={setShowAddForm}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Add New Doctor</DialogTitle>
+            </DialogHeader>
             <AddDoctorForm
-              initialData={editingDoctor}
-              onSubmit={handleUpdateDoctor}
-              onCancel={() => setEditingDoctor(null)}
-              isEditing
+              onSubmit={handleAddDoctor}
+              onCancel={() => setShowAddForm(false)}
             />
-          )}
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
 
-      <div className="mt-6 overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Specialization
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Email
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Phone
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Experience
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {currentDoctors?.length > 0 &&
-              currentDoctors.map((doctor) => (
-                <tr key={doctor._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">{doctor.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {doctor.specialization.map((spec, index) => (
-                      <span key={index}>
-                        {spec}
-                        {index < doctor.specialization.length - 1 && ', '}
-                      </span>
-                    ))}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {doctor.email}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {doctor.phone}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {doctor.experience}
-                  </td>
-                  <td className=" flex gap-4 items-center justify-between px-6 py-4 whitespace-nowrap">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditingDoctor(doctor)}
-                    >
-                      Edit
-                    </Button>
-                    <Trash2
-                      className="text-red-500 cursor-pointer hover:text-red-800"
-                      onClick={() => handleDeleteDoctor(doctor._id)}
-                    />
-                  </td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
+        <Dialog
+          open={!!editingDoctor}
+          onOpenChange={(open) => !open && setEditingDoctor(null)}
+        >
+          <DialogContent className="max-w-5xl max-h-[80vh] overflow-y-auto">
+            {/* <DialogHeader>
+              <DialogTitle>Edit Doctor Details</DialogTitle>
+            </DialogHeader> */}
+            {editingDoctor && (
+              <AddDoctorForm
+                initialData={editingDoctor}
+                onSubmit={handleUpdateDoctor}
+                onCancel={() => setEditingDoctor(null)}
+                isEditing
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
-      <div className="flex justify-between">
-        <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}>Previous</button>
-        <span>Page {currentPage}</span>
-        <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredDoctors.length / itemsPerPage)))}>Next</button>
+
+      <div className="sticky bottom-0 bg-white border-t p-4 mt-auto">
+        <div className="flex justify-between items-center max-w-screen-xl mx-auto">
+          <Button
+            variant="outline"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            className="text-sm md:text-base"
+          >
+            Previous
+          </Button>
+          <span className="text-sm md:text-base">Page {currentPage}</span>
+          <Button
+            variant="outline"
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage((prev) => prev + 1)}
+            className="text-sm md:text-base"
+          >
+            Next
+          </Button>
+        </div>
       </div>
     </div>
   );

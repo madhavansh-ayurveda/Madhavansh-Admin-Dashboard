@@ -18,24 +18,35 @@ export const adminApi = {
   },
 
   getDashboardStats: async (): Promise<DashboardStats> => {
-    // console.log('getDashboardStats api hit client', api.defaults.baseURL)
     const response = await AdminApi.get("/dashboard-stats");
-    console.log(response);
-
     return response.data.data;
   },
 
   getConsultationStats: async (): Promise<ConsultationStats> => {
     const response = await AdminApi.get("/consultation-stats");
-    console.log(response);
-
     return response.data.data;
   },
 
-  getAllConsultations: async (page = 1, limit = 10) => {
-    const response = await AdminApi.get(
-      `/consultations?page=${page}&limit=${limit}`
-    );
+  getAllConsultations: async (
+    page: number,
+    limit: number,
+    search?: string,
+    status?: string,
+    types?: string[],
+    startDate?: string,
+    endDate?: string
+  ) => {
+    const queryParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...(search && { search }),
+      ...(status && { status }),
+      ...(types?.length && { types: types.join(",") }),
+      ...(startDate && { startDate }),
+      ...(endDate && { endDate }),
+    });
+
+    const response = await AdminApi.get(`/consultations?${queryParams}`);
     return response.data;
   },
 
@@ -49,7 +60,6 @@ export const adminApi = {
 
   deleteConsultation: async (id: string, userId: string) => {
     const response = await AdminApi.delete(`/consultations/${userId}/${id}`);
-    console.log(response);
     return response.data;
   },
 

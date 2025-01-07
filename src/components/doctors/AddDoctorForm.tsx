@@ -29,7 +29,6 @@ import {
 interface AddDoctorFormProps {
   initialData?: Doctor;
   onSuccess?: (doctor: Doctor) => void;
-  mode?: "create" | "edit";
   onSubmit: (data: CreateDoctorDto) => Promise<void>;
   onCancel: () => void;
   isEditing?: boolean;
@@ -51,7 +50,7 @@ const statusOptions = ["active", "inactive", "on-leave"];
 type DoctorStatus = "active" | "inactive" | "on-leave";
 
 // Add this type
-type Specialization = 'Ayurveda' | 'Panchakarma' | 'Yoga' | 'General';
+type Specialization = "Ayurveda" | "Panchakarma" | "Yoga" | "General";
 
 interface TimeSlot {
   startTime: string;
@@ -62,7 +61,7 @@ interface TimeSlot {
 export function AddDoctorForm({
   initialData,
   onSuccess,
-  mode = "create",
+  isEditing,
 }: AddDoctorFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -116,28 +115,36 @@ export function AddDoctorForm({
   }, [initialData, form]);
 
   const handleAddTimeSlot = (dayIndex: number) => {
-    setTimeSlots(prev => {
+    setTimeSlots((prev) => {
       const newSlots = [...prev];
       if (!newSlots[dayIndex]) {
         newSlots[dayIndex] = [];
       }
-      newSlots[dayIndex] = [...newSlots[dayIndex], { startTime: "09:00", endTime: "17:00", isBooked: false }];
+      newSlots[dayIndex] = [
+        ...newSlots[dayIndex],
+        { startTime: "09:00", endTime: "17:00", isBooked: false },
+      ];
       return newSlots;
     });
   };
 
   const handleRemoveTimeSlot = (dayIndex: number, slotIndex: number) => {
-    setTimeSlots(prev => {
+    setTimeSlots((prev) => {
       const newSlots = [...prev];
       newSlots[dayIndex] = newSlots[dayIndex].filter((_, i) => i !== slotIndex);
       return newSlots;
     });
   };
 
-  const handleTimeSlotChange = (dayIndex: number, slotIndex: number, field: 'startTime' | 'endTime', value: string) => {
-    setTimeSlots(prev => {
+  const handleTimeSlotChange = (
+    dayIndex: number,
+    slotIndex: number,
+    field: "startTime" | "endTime",
+    value: string
+  ) => {
+    setTimeSlots((prev) => {
       const newSlots = [...prev];
-      newSlots[dayIndex] = newSlots[dayIndex].map((slot, i) => 
+      newSlots[dayIndex] = newSlots[dayIndex].map((slot, i) =>
         i === slotIndex ? { ...slot, [field]: value } : slot
       );
       return newSlots;
@@ -154,7 +161,7 @@ export function AddDoctorForm({
       setIsLoading(true);
       let response: Doctor;
 
-      if (mode === "edit" && initialData?._id) {
+      if (isEditing && initialData?._id) {
         response = {
           ...data,
           _id: initialData._id,
@@ -175,7 +182,7 @@ export function AddDoctorForm({
         onSuccess(response);
       }
 
-      if (mode === "create") {
+      if (!isEditing) {
         form.reset();
         setSelectedSpecializations([]);
         setSelectedDays([]);
@@ -183,34 +190,37 @@ export function AddDoctorForm({
       }
     } catch (error: any) {
       // Extract error message from the API response
-      const errorMessage = error.response?.data?.message || 
-                          error.message || 
-                          'Failed to process doctor data';
-      
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to process doctor data";
+
       toast({
         variant: "destructive",
         title: "Error",
         description: errorMessage,
       });
-      
+
       // Log the full error for debugging
-      console.error('Form submission error:', error);
+      console.error("Form submission error:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-3xl mx-auto">
       <CardHeader>
         <CardTitle>
-          {mode === "edit" ? "Edit Doctor" : "Add New Doctor"}
-        </CardTitle>
-        <CardDescription>
-          {mode === "edit"
+          {isEditing
             ? "Update the doctor's details below"
             : "Enter the doctor's details below"}
-        </CardDescription>
+        </CardTitle>
+        {/* <CardDescription>
+          {isEditing
+            ? "Update the doctor's details below"
+            : "Enter the doctor's details below"}
+        </CardDescription> */}
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -274,10 +284,16 @@ export function AddDoctorForm({
                             (item) => item !== spec
                           );
                         } else {
-                          newSpecializations = [...selectedSpecializations, spec];
+                          newSpecializations = [
+                            ...selectedSpecializations,
+                            spec,
+                          ];
                         }
                         setSelectedSpecializations(newSpecializations);
-                        form.setValue("specialization", newSpecializations as Specialization[]);
+                        form.setValue(
+                          "specialization",
+                          newSpecializations as Specialization[]
+                        );
                       }}
                       className="rounded border-gray-300"
                     />
@@ -399,15 +415,25 @@ export function AddDoctorForm({
                       Add Time Slot
                     </Button>
                   </div>
-                  
+
                   {(timeSlots[dayIndex] || []).map((slot, slotIndex) => (
-                    <div key={slotIndex} className="flex gap-4 items-center mt-2">
+                    <div
+                      key={slotIndex}
+                      className="flex gap-4 items-center mt-2"
+                    >
                       <div className="flex-1">
                         <FormLabel>Start Time</FormLabel>
                         <Input
                           type="time"
                           value={slot.startTime}
-                          onChange={(e) => handleTimeSlotChange(dayIndex, slotIndex, 'startTime', e.target.value)}
+                          onChange={(e) =>
+                            handleTimeSlotChange(
+                              dayIndex,
+                              slotIndex,
+                              "startTime",
+                              e.target.value
+                            )
+                          }
                         />
                       </div>
                       <div className="flex-1">
@@ -415,7 +441,14 @@ export function AddDoctorForm({
                         <Input
                           type="time"
                           value={slot.endTime}
-                          onChange={(e) => handleTimeSlotChange(dayIndex, slotIndex, 'endTime', e.target.value)}
+                          onChange={(e) =>
+                            handleTimeSlotChange(
+                              dayIndex,
+                              slotIndex,
+                              "endTime",
+                              e.target.value
+                            )
+                          }
                         />
                       </div>
                       <Button
@@ -423,7 +456,9 @@ export function AddDoctorForm({
                         variant="destructive"
                         size="sm"
                         className="mt-6"
-                        onClick={() => handleRemoveTimeSlot(dayIndex, slotIndex)}
+                        onClick={() =>
+                          handleRemoveTimeSlot(dayIndex, slotIndex)
+                        }
                       >
                         Remove
                       </Button>
@@ -435,10 +470,10 @@ export function AddDoctorForm({
 
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading
-                ? mode === "edit"
+                ? isEditing
                   ? "Updating Doctor..."
                   : "Adding Doctor..."
-                : mode === "edit"
+                : isEditing
                 ? "Update Doctor"
                 : "Add Doctor"}
             </Button>
