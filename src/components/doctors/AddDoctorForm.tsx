@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { CreateDoctorDto, Doctor } from "../../api/doctorApi";
-import { doctorApi } from "../../api/doctorApi";
-import { useToast } from "../../hooks/use-toast";
 import { Button } from "../../components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
+  // CardDescription,
   CardHeader,
   CardTitle,
 } from "../../components/ui/card";
@@ -25,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../components/ui/select";
+import { useLocation } from "react-router-dom";
 
 interface AddDoctorFormProps {
   initialData?: Doctor;
@@ -32,6 +31,12 @@ interface AddDoctorFormProps {
   onSubmit: (data: CreateDoctorDto) => Promise<void>;
   onCancel: () => void;
   isEditing?: boolean;
+}
+
+interface TimeSlot {
+  startTime: string;
+  endTime: string;
+  isBooked?: boolean;
 }
 
 const specializationOptions = ["Ayurveda", "Panchakarma", "Yoga", "General"];
@@ -49,21 +54,37 @@ const statusOptions = ["active", "inactive", "on-leave"];
 // First, define the status type
 type DoctorStatus = "active" | "inactive" | "on-leave";
 
+// Define the department type
+type DepartmentSpeciality =
+  | "Skin & Hair"
+  | "Infertility and PCOD"
+  | "Kidney and Gallbladder Stone"
+  | "Arthritis and Pain Management"
+  | "Life style disorder"
+  | "Glaucoma"
+  | "Immunity booster dose";
+
 // Add this type
 type Specialization = "Ayurveda" | "Panchakarma" | "Yoga" | "General";
 
-interface TimeSlot {
-  startTime: string;
-  endTime: string;
-  isBooked?: boolean;
-}
+// Define the department options
+const departmentSpeciality: DepartmentSpeciality[] = [
+  "Skin & Hair",
+  "Infertility and PCOD",
+  "Kidney and Gallbladder Stone",
+  "Arthritis and Pain Management",
+  "Life style disorder",
+  "Glaucoma",
+  "Immunity booster dose",
+];
 
 export function AddDoctorForm({
   initialData,
-  onSuccess,
-  isEditing,
+  onSubmit,
+  isEditing = false as boolean,
 }: AddDoctorFormProps) {
-  const { toast } = useToast();
+  console.log(isEditing);
+
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSpecializations, setSelectedSpecializations] = useState<
     string[]
@@ -74,6 +95,11 @@ export function AddDoctorForm({
   const [timeSlots, setTimeSlots] = useState<TimeSlot[][]>(
     initialData?.availability?.slots || []
   );
+  const [department, setDepartment] = useState<DepartmentSpeciality[]>(
+    initialData?.department || []
+  );
+
+  console.log(initialData);
 
   const form = useForm<CreateDoctorDto>({
     defaultValues: {
@@ -81,6 +107,7 @@ export function AddDoctorForm({
       email: initialData?.email || "",
       phone: initialData?.phone || "",
       specialization: initialData?.specialization || [],
+      department: initialData?.department || [],
       qualification: initialData?.qualification || "",
       experience: initialData?.experience || 0,
       registrationNumber: initialData?.registrationNumber || "",
@@ -107,10 +134,12 @@ export function AddDoctorForm({
         status: initialData.status,
         availability: initialData.availability,
         profileImage: initialData.profileImage,
+        department: initialData.department || [],
       });
       setSelectedSpecializations(initialData.specialization);
       setSelectedDays(initialData.availability.days);
       setTimeSlots(initialData.availability.slots);
+      setDepartment(initialData.department || []);
     }
   }, [initialData, form]);
 
@@ -156,57 +185,77 @@ export function AddDoctorForm({
     form.setValue("availability.slots", timeSlots);
   }, [timeSlots]);
 
-  const onSubmit = async (data: CreateDoctorDto) => {
+  const handleValueChange = (value: DepartmentSpeciality) => {
+    setDepartment((currentDepartments) => {
+      const newDepartments = currentDepartments.includes(value)
+        ? currentDepartments.filter((dept) => dept !== value)
+        : [...currentDepartments, value];
+
+      // Update the form value with the new department array
+      form.setValue("department", newDepartments);
+      return newDepartments; // Return the new state
+    });
+  };
+
+  const handleSubmit = async (data: CreateDoctorDto) => {
     try {
       setIsLoading(true);
-      let response: Doctor;
+      // let response: Doctor;
+      console.log(department);
+      console.log(data);
+      onSubmit(data);
 
-      if (isEditing && initialData?._id) {
-        response = {
-          ...data,
-          _id: initialData._id,
-        };
-        toast({
-          title: "Success",
-          description: "Doctor updated successfully",
-        });
-      } else {
-        response = await doctorApi.createDoctor(data);
-        toast({
-          title: "Success",
-          description: "Doctor added successfully",
-        });
-      }
+      // if (isEditing && initialData?._id) {
+      //   // console.log(data, initialData);
 
-      if (onSuccess) {
-        onSuccess(response);
-      }
+      //   response = {
+      //     ...data,
+      //     _id: initialData._id,
+      //   };
+      //   onSubmit(data);
 
-      if (!isEditing) {
-        form.reset();
-        setSelectedSpecializations([]);
-        setSelectedDays([]);
-        setTimeSlots([]);
-      }
+      //   toast({
+      //     title: "Success",
+      //     description: "Doctor updated successfully",
+      //   });
+      // } else {
+      //   console.log(data);
+
+      //   response = await doctorApi.createDoctor(data);
+      //   toast({
+      //     title: "Success",
+      //     description: "Doctor added successfully",
+      //   });
+      // }
+
+      // if (onSuccess) {
+      //   onSuccess(response);
+      // }
+
+      // if (!isEditing) {
+      //   form.reset();
+      //   setSelectedSpecializations([]);
+      //   setSelectedDays([]);
+      //   setTimeSlots([]);
+      // }
     } catch (error: any) {
-      // Extract error message from the API response
       const errorMessage =
         error.response?.data?.message ||
         error.message ||
         "Failed to process doctor data";
-
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: errorMessage,
-      });
-
       // Log the full error for debugging
-      console.error("Form submission error:", error);
+      console.error("Form submission error:", errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
+
+  const location = useLocation();
+
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location]);
 
   return (
     <Card className="w-full max-w-3xl mx-auto">
@@ -224,7 +273,10 @@ export function AddDoctorForm({
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-6"
+          >
             {/* Name */}
             <div>
               <FormLabel htmlFor="name">Name</FormLabel>
@@ -298,6 +350,26 @@ export function AddDoctorForm({
                       className="rounded border-gray-300"
                     />
                     <span>{spec}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Department */}
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Department
+              </label>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {departmentSpeciality.map((dept) => (
+                  <label key={dept} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={department.includes(dept)}
+                      onChange={() => handleValueChange(dept as DepartmentSpeciality)}
+                      className="rounded border-gray-300"
+                    />
+                    <span>{dept}</span>
                   </label>
                 ))}
               </div>

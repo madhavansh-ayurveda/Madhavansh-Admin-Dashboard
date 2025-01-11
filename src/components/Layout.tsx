@@ -14,7 +14,7 @@ export default function Layout() {
         <Header onMenuButtonClick={() => setSidebarOpen(true)} />
         
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100">
-          <div className="mx-auto px-6 py-8">
+          <div className="mx-auto px-6">
             <Outlet />
           </div>
         </main>

@@ -18,6 +18,7 @@ import {
   CACHE_DURATIONS,
 } from "@/store/cacheSlice";
 import { RootState } from "@/store";
+import toast from "react-hot-toast";
 
 export default function Doctors() {
   const [showAddForm, setShowAddForm] = useState(false);
@@ -44,9 +45,11 @@ export default function Doctors() {
       }
 
       try {
-        setIsLoading(true);
+        // setIsLoading(true);
         setError(null);
         const response = await doctorApi.getAllDoctors();
+        console.log(response);
+        setTotalPages(response.totalPages);
         setDoctors(response.data);
 
         dispatch(
@@ -65,7 +68,7 @@ export default function Doctors() {
     };
 
     fetchDoctors();
-  }, [currentPage, searchTerm, dispatch]);
+  }, [currentPage, searchTerm]);
 
   // Filter doctors based on search term across all fields
   const filteredDoctors = doctors.filter(
@@ -75,7 +78,10 @@ export default function Doctors() {
       doctor.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
       doctor.specialization.some((spec) =>
         spec.toLowerCase().includes(searchTerm.toLowerCase())
-      ) // Check specialization
+      ) || // Check specialization
+      doctor.department.some((dept) =>
+        dept.toLowerCase().includes(searchTerm.toLowerCase())
+      ) // Check department
   );
 
   const indexOfLastDoctor = currentPage * itemsPerPage;
@@ -108,11 +114,20 @@ export default function Doctors() {
 
   const handleUpdateDoctor = async (data: CreateDoctorDto) => {
     try {
+      console.log(data);
+
       if (!editingDoctor?._id) return;
       const updatedDoctor = await doctorApi.updateDoctor(
         editingDoctor._id,
         data
       );
+
+      if (updatedDoctor) {
+        console.log("doctors data updated");
+
+        toast.success("Doctors data updated");
+      }
+
       setDoctors((prev) =>
         prev.map((doc) => (doc._id === updatedDoctor._id ? updatedDoctor : doc))
       );
@@ -147,7 +162,9 @@ export default function Doctors() {
     <div className="flex flex-col min-h-screen">
       <div className="flex-grow space-y-6 p-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-xl md:text-2xl font-semibold">Doctors Management</h1>
+          <h1 className="text-xl md:text-2xl font-semibold">
+            Doctors Management
+          </h1>
           <Button
             onClick={() => setShowAddForm(true)}
             className="bg-primary-600 text-white hover:bg-primary-700"
@@ -174,6 +191,9 @@ export default function Doctors() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
                   Specialization
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                  Department
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
                   Email
                 </th>
@@ -190,22 +210,34 @@ export default function Doctors() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {currentDoctors?.length > 0 &&
-                currentDoctors.map((doctor) => (
-                  <tr key={doctor._id} className="hover:bg-gray-50 text-sm md:text-base">
-                    <td className="px-6 py-4 whitespace-nowrap">{doctor.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
-                      {doctor.specialization.join(", ")}
+                currentDoctors.map((doctor, index) => (
+                  <tr
+                    key={doctor._id}
+                    className={`hover:bg-gray-100 text-sm md:text-base ${
+                      index % 2 ? "bg-gray-50" : ""
+                    }`}
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {doctor.name}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm hidden md:table-cell">
+                      {doctor.specialization.slice(0, 2).join(", ")}
+                      {doctor.specialization.length > 2 && <>..</>}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm hidden md:table-cell">
+                      {doctor.department.slice(0, 2).join(", ")}
+                      {doctor.department.length > 2 && <>..</>}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm hidden sm:table-cell">
                       {doctor.email}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm hidden lg:table-cell">
                       {doctor.phone}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap hidden xl:table-cell">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm hidden xl:table-cell">
                       {doctor.experience}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex gap-4 items-center">
                         <Button
                           variant="outline"
@@ -251,7 +283,7 @@ export default function Doctors() {
                 initialData={editingDoctor}
                 onSubmit={handleUpdateDoctor}
                 onCancel={() => setEditingDoctor(null)}
-                isEditing
+                isEditing={true}
               />
             )}
           </DialogContent>

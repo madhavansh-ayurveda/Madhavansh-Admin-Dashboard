@@ -45,6 +45,9 @@ export default function Users() {
         setUsers(response.data);
         setTotalPages(response.totalPages);
 
+        console.log(response);
+        
+
         dispatch(setCacheData({
           key: cacheKey,
           data: response.data,
@@ -81,32 +84,36 @@ export default function Users() {
           className="w-full md:w-1/2 lg:w-1/3"
         />
 
-        <Card className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead className="hidden sm:table-cell">Contact</TableHead>
-                <TableHead className="hidden md:table-cell">Age</TableHead>
-                <TableHead className="hidden lg:table-cell">Joined</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredUsers?.map((user) => (
-                <TableRow key={user._id} className="text-sm md:text-base">
-                  <TableCell>{user.name}</TableCell>
-                  <TableCell>{user.email || " NA "}</TableCell>
-                  <TableCell className="hidden sm:table-cell">{user.contact}</TableCell>
-                  <TableCell className="hidden md:table-cell">{user.age || " NA "}</TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    {new Date(user.createdAt).toLocaleDateString()}
-                  </TableCell>
+        {loading ? (
+          <div className="text-center">Loading users...</div>
+        ) : (
+          <Card className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead className="hidden sm:table-cell">Contact</TableHead>
+                  <TableHead className="hidden md:table-cell">Age</TableHead>
+                  <TableHead className="hidden lg:table-cell">Joined</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
+              </TableHeader>
+              <TableBody>
+                {filteredUsers?.map((user) => (
+                  <TableRow key={user._id} className="text-sm md:text-base">
+                    <TableCell>{user.name}</TableCell>
+                    <TableCell>{user.email || " NA "}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{user.contact}</TableCell>
+                    <TableCell className="hidden md:table-cell">{user.age || " NA "}</TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      {new Date(user.createdAt).toLocaleDateString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+        )}
       </div>
 
       <div className="sticky bottom-0 bg-white border-t p-4 mt-auto">

@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Users, Stethoscope, Calendar, IndianRupee } from "lucide-react";
 import { adminApi } from "@/api/adminApi";
 import { DashboardStats, ConsultationStats } from "@/types";
-import { setCredentials } from "@/store/authSlice";
+// import { setCredentials } from "@/store/authSlice";
 import {
   LineChart,
   Line,
@@ -70,7 +70,7 @@ export default function Dashboard() {
       value: consultationStats?.statusStats[0].result.pending.count || 0,
       icon: Calendar,
     },
-    { name: 'Comfirmed Consultations', value: consultationStats?.statusStats[0].result.confirmed.count || 0, icon: Calendar },
+    { name: 'Comfirmed Consultations', value: consultationStats?.statusStats[0].result.confirmed?.count || 0, icon: Calendar },
     {
       name: "Total Consultations",
       value: stats?.totalConsultations || 0,

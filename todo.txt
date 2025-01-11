@@ -1,0 +1,5 @@
+Create a history button in user.tsx to display all the consultations of the user including the past,current and upcomming, as well as the pescriptions upload
+Also an update of users information button.
+
+Handle the pescriptions upload in the admin-server link
+
