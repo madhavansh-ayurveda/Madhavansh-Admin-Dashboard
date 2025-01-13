@@ -70,7 +70,11 @@ export default function Dashboard() {
       value: consultationStats?.statusStats[0].result.pending.count || 0,
       icon: Calendar,
     },
-    { name: 'Comfirmed Consultations', value: consultationStats?.statusStats[0].result.confirmed?.count || 0, icon: Calendar },
+    {
+      name: "Comfirmed Consultations",
+      value: consultationStats?.statusStats[0].result.confirmed?.count || 0,
+      icon: Calendar,
+    },
     {
       name: "Total Consultations",
       value: stats?.totalConsultations || 0,

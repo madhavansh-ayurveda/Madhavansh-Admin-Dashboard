@@ -41,6 +41,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Filter } from "lucide-react";
+import { CheckCheck } from "lucide-react";
 
 interface Consultation {
   _id: string;
@@ -215,6 +216,15 @@ export default function Consultations() {
     }
   };
 
+  // const handleCompleteConsultation = async (id: string) => {
+  //   // Mark consultation as completed
+  //   await adminApi.completeConsultation(id);
+
+  //   // Trigger feedback form
+  //   // You can use a modal or a separate component to show the feedback form
+  //   setShowFeedbackForm(true); // Assuming you have a state to control the feedback form visibility
+  // };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -306,9 +316,7 @@ export default function Consultations() {
                 </TableHead>
                 <TableHead className="min-w-[100px] border">Status</TableHead>
                 <TableHead className="min-w-[50px] border">Amount</TableHead>
-                <TableHead className="text-center min-w-[100px]">
-                  Actions
-                </TableHead>
+                <TableHead className="min-w-[100px] border">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

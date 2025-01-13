@@ -1,9 +1,27 @@
 import { User, ConsultationStats, DashboardStats } from "@/types";
 import { AdminApi } from "./axios";
+// import axios from "axios";
 
 export const adminApi = {
-  getAllUsers: async (page = 1, limit = 10) => {
-    const response = await AdminApi.get(`/users?page=${page}&limit=${limit}`);
+  getAllUsers: async (
+    page = 1,
+    limit = 10,
+    search?: string,
+    minAge?: number,
+    maxAge?: number,
+    startDate?: string,
+    endDate?: string
+  ) => {
+    const queryParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...(search && { search }),
+      ...(minAge && { minAge: minAge.toString() }),
+      ...(maxAge && { maxAge: maxAge.toString() }),
+      ...(startDate && { startDate }),
+      ...(endDate && { endDate }),
+    });
+    const response = await AdminApi.get(`/users?${queryParams}`);
     return response.data;
   },
 
@@ -68,6 +86,26 @@ export const adminApi = {
       `/consultations/${consultationId}/prescription`,
       formData
     );
+    return response.data;
+  },
+
+  sendFeedback: async ({
+    consultationId,
+    feedback,
+    rating,
+    userEmail,
+  }: {
+    consultationId: string;
+    feedback: string;
+    rating: number;
+    userEmail: string;
+  }) => {
+    const response = await AdminApi.post("/api/feedback", {
+      consultationId,
+      feedback,
+      rating,
+      userEmail,
+    });
     return response.data;
   },
 };
