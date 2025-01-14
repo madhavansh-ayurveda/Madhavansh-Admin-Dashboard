@@ -1,4 +1,3 @@
-import { User } from 'lucide-react';
 import React from 'react'
 import { Navigate } from 'react-router-dom'
 import { useSelector } from 'react-redux';
