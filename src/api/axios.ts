@@ -1,4 +1,5 @@
 import axios from "axios";
+import { store } from "@/store";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -18,3 +19,20 @@ export const AdminApi = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+AdminApi.interceptors.request.use(
+  (config) => {
+    const state = store.getState();
+    const token = state.auth.token;
+    // console.log(token);
+
+    if (token) {
+      config.headers.Authorization = `${token}`;
+    }
+
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);

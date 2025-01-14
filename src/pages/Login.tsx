@@ -23,7 +23,7 @@ export default function Login() {
       console.log("Login response:", response);
 
       if (response.success && response.user) {
-        dispatch(setCredentials({ user: response.user }));
+        dispatch(setCredentials({ user: response.user, token: response.token }));
         localStorage.setItem("adminToken", response.token);
         Cookies.set("adminToken", response.token, {
           expires: 7,
