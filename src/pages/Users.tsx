@@ -110,6 +110,8 @@ export default function Users() {
     setCurrentPage(1);
   };
 
+  selectedUser;
+  
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFilters((prev) => ({

@@ -129,7 +129,7 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
                 <TableBody>
                     {consultations &&
                         consultations.length > 0 &&
-                        consultations.map((consultation, index) => (
+                        consultations.map((consultation) => (
                             <TableRow
                                 key={consultation._id}
                                 className={`text-sm md:text-base hover:bg-gray-100`}

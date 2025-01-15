@@ -2,13 +2,6 @@ import { useEffect, useState, useRef } from "react";
 import { adminApi } from "@/api/adminApi";
 import { Card } from "@/components/ui/card";
 import {
-  // setCacheData,
-  // selectCacheData,
-  clearCacheByPrefix,
-  // CACHE_DURATIONS,
-} from "@/store/cacheSlice";
-import { useDispatch } from "react-redux";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
@@ -53,8 +46,8 @@ export interface Consultation {
 export default function Consultations() {
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingConsultation, setEditingConsultation] =
-    useState<Consultation | null>(null);
+  // const [editingConsultation, setEditingConsultation] =
+    // useState<Consultation | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -84,7 +77,7 @@ export default function Consultations() {
           startDate,
           endDate
         );
-
+        setSelectedTypes;
         if (response.success) {
           setConsultations(response.data);
           setTotalPages(response.totalPages);

@@ -40,7 +40,7 @@ const cacheSlice = createSlice({
         count: action.payload.count
       };
     },
-    clearCache: (state) => {
+    clearCache: () => {
       return initialState;
     },
     clearCacheByPrefix: (state, action: PayloadAction<string>) => {
