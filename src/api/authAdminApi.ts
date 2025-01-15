@@ -1,31 +1,21 @@
-import axios from "axios";
 import Cookies from "js-cookie";
 import { store } from "@/store";
 import { logout } from "@/store/authSlice";
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-// const API_URL = `${BASE_URL}/api/admin/auth`;
+import { AdminApi } from "./axios";
 
-// Create an axios instance with default config
-const api = axios.create({
-  baseURL: BASE_URL,
-  withCredentials: true, // Important for handling cookies
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
 
 export const authAdminApi = {
   login: async (email: string, password: string) => {
     try {
       console.log("Attempting login with:", { email, password });
-      const response = await api.post(`/api/admin/auth/login`, {
+      const response = await AdminApi.post(`/auth/login`, {
         email,
         password,
       });
       console.log("Login response:", response);
 
       if (response.data.token) {
-        api.defaults.headers.common[
+        AdminApi.defaults.headers.common[
           "Authorization"
         ] = `Bearer ${response.data.token}`;
       }
@@ -42,22 +32,22 @@ export const authAdminApi = {
 
   logout: async () => {
     try {
-      const response = await api.post(`/api/admin/auth/logout`);
+      const response = await AdminApi.post(`/auth/logout`);
       localStorage.removeItem("token");
       localStorage.removeItem("adminToken");
       Cookies.remove("adminToken");
-      delete api.defaults.headers.common["Authorization"];
-      
+      delete AdminApi.defaults.headers.common["Authorization"];
+
       // Dispatch logout action to clear Redux store
       store.dispatch(logout());
-      
+
       return response.data;
     } catch (error) {
       // Even if the API call fails, we should still clear local state
       localStorage.removeItem("token");
       localStorage.removeItem("adminToken");
       Cookies.remove("adminToken");
-      delete api.defaults.headers.common["Authorization"];
+      delete AdminApi.defaults.headers.common["Authorization"];
       store.dispatch(logout());
       throw error;
     }
@@ -70,7 +60,7 @@ export const authAdminApi = {
         throw new Error("No token found");
       }
 
-      const response = await api.get(`/api/admin/auth/check`, {
+      const response = await AdminApi.get(`/auth/check`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -84,7 +74,7 @@ export const authAdminApi = {
 };
 
 // Add request interceptor to add token to all requests
-api.interceptors.request.use(
+AdminApi.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -98,7 +88,7 @@ api.interceptors.request.use(
 );
 
 // Add response interceptor to handle 401 errors
-api.interceptors.response.use(
+AdminApi.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
