@@ -1,4 +1,3 @@
-import { adminApi } from "./adminApi";
 import { AdminApi, api } from "./axios";
 
 export interface Slot {
@@ -69,7 +68,7 @@ export type CreateDoctorDto = {
 
 export const doctorApi = {
   getAllDoctors: async (page = 1, limit = 10) => {
-    const response = await AdminApi.get(`/doctors`);
+    const response = await AdminApi.get(`/doctors?page=${page}&limit=${limit}`);
     return response.data;
   },
 
