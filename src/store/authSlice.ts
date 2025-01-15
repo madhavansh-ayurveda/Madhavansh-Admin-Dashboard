@@ -23,7 +23,7 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null; // Clear token on logout
       localStorage.removeItem("authToken");
-      localStorage.removeItem("adminToken");
+      localStorage.removeItem("adminToken"); 
       Cookies.remove("adminToken");
     },
   },

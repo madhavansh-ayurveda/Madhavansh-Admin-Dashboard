@@ -1,5 +1,7 @@
 import axios from "axios";
 import Cookies from "js-cookie";
+import { store } from "@/store";
+import { logout } from "@/store/authSlice";
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 // const API_URL = `${BASE_URL}/api/admin/auth`;
 
@@ -42,10 +44,21 @@ export const authAdminApi = {
     try {
       const response = await api.post(`/api/admin/auth/logout`);
       localStorage.removeItem("token");
-      // Remove token from default headers
+      localStorage.removeItem("adminToken");
+      Cookies.remove("adminToken");
       delete api.defaults.headers.common["Authorization"];
+      
+      // Dispatch logout action to clear Redux store
+      store.dispatch(logout());
+      
       return response.data;
     } catch (error) {
+      // Even if the API call fails, we should still clear local state
+      localStorage.removeItem("token");
+      localStorage.removeItem("adminToken");
+      Cookies.remove("adminToken");
+      delete api.defaults.headers.common["Authorization"];
+      store.dispatch(logout());
       throw error;
     }
   },

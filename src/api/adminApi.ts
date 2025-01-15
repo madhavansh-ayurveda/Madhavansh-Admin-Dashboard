@@ -1,6 +1,9 @@
 import { User, ConsultationStats, DashboardStats } from "@/types";
 import { AdminApi } from "./axios";
-// import axios from "axios";
+import { authAdminApi } from "./authAdminApi";
+import { AxiosError } from "axios";
+import { navigateTo } from "@/utils/navigation";
+
 
 export const adminApi = {
   getAllUsers: async (
@@ -36,8 +39,29 @@ export const adminApi = {
   },
 
   getDashboardStats: async (): Promise<DashboardStats> => {
-    const response = await AdminApi.get("/dashboard-stats");
-    return response.data.data;
+    try {
+      const response = await AdminApi.get("/dashboard-stats");
+      console.log(response);
+      return response.data.data;
+    } catch (err) {
+      console.log(err);
+      if (err instanceof AxiosError &&
+        err.response?.data?.error?.message === "jwt malformed") {
+        await authAdminApi.logout();
+        navigateTo('/login');
+      }
+      return {
+        totalPatients: 0,
+        totalDoctors: 0,
+        totalConsultations: 0,
+        totalRevenue: 0,
+        uniqueConsultations: 0,
+        totalOneTimePatients: 0
+      }
+    }
+    // if (!response.data.success && response.data.message=="No to"){
+    //   return undefined;
+    // }
   },
 
   getConsultationStats: async (): Promise<ConsultationStats> => {
