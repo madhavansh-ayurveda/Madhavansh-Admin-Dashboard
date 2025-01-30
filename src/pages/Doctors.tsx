@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { doctorApi, type Doctor, type CreateDoctorDto } from "@/api/doctorApi";
 import AddDoctorForm from "@/components/doctors/AddDoctorForm";
 import {
@@ -35,6 +35,7 @@ export default function Doctors() {
   const cachedData = useSelector((state: RootState) =>
     selectCacheData(state, cacheKey, CACHE_DURATIONS.DOCTORS)
   );
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fetchDoctors = async () => {
@@ -69,6 +70,25 @@ export default function Doctors() {
 
     fetchDoctors();
   }, [currentPage, searchTerm]);
+
+
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === '/') {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        searchInputRef.current?.blur();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, []);
 
   // Filter doctors based on search term across all fields
   const filteredDoctors = doctors.filter(
@@ -167,9 +187,9 @@ export default function Doctors() {
           </h1>
           <Button
             onClick={() => setShowAddForm(true)}
-            className="bg-primary-600 text-white hover:bg-primary-700"
+            className="bg-primary-600 text-white hover:bg-primary-700 flex items-center"
           >
-            Add New Doctor
+            + New Doctor
           </Button>
         </div>
 
@@ -178,6 +198,7 @@ export default function Doctors() {
           placeholder="Search Doctors"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          ref={searchInputRef}
           className="w-full md:w-1/2 lg:w-1/3"
         />
 
@@ -213,9 +234,8 @@ export default function Doctors() {
                 currentDoctors.map((doctor, index) => (
                   <tr
                     key={doctor._id}
-                    className={`hover:bg-gray-100 text-sm md:text-base ${
-                      index % 2 ? "bg-gray-50" : ""
-                    }`}
+                    className={`hover:bg-gray-100 text-sm md:text-base ${index % 2 ? "bg-gray-50" : ""
+                      }`}
                   >
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {doctor.name}

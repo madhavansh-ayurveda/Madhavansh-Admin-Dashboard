@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { adminApi } from "@/api/adminApi";
 import { User } from "@/types";
@@ -40,10 +40,13 @@ export default function Users() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isSearch, setIsSearch] = useState<string>("");
+  const [shouldFetch, setShouldFetch] = useState(true);
+  const [filteredCleared, setFilterCleared] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [itemsPerPage] = useState(10);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  // const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [updatedUser, setUpdatedUser] = useState<User | null>(null);
   const [filters, setFilters] = useState({
     minAge: "",
@@ -52,6 +55,7 @@ export default function Users() {
     endDate: "",
   });
   const [showFilters, setShowFilters] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const dispatch = useDispatch();
   const cacheKey = `users_page_${currentPage}_search_${searchTerm}_filters_${JSON.stringify(
@@ -62,6 +66,27 @@ export default function Users() {
   );
 
   useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === '/') {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        searchInputRef.current?.blur();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, []);
+
+
+  useEffect(() => {
+    if (!shouldFetch) return;
+
     const fetchUsers = async () => {
       if (cachedData) {
         setUsers(cachedData.data);
@@ -96,53 +121,66 @@ export default function Users() {
       } finally {
         setLoading(false);
       }
+      if (filteredCleared) setShouldFetch(false);
     };
 
     const debounceTimer = setTimeout(() => {
       fetchUsers();
-    }, 300); // Debounce search for better performance
+    }, 300);
 
     return () => clearTimeout(debounceTimer);
-  }, [currentPage, searchTerm, filters, dispatch, cachedData, itemsPerPage]);
+  }, [currentPage, searchTerm, filters, dispatch, cachedData, itemsPerPage, shouldFetch]);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    setCurrentPage(1);
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      setSearchTerm(isSearch);
+    }
   };
 
-  selectedUser;
-  
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFilters((prev) => ({
       ...prev,
       [name]: value,
     }));
+    setShouldFetch(true);
     setCurrentPage(1);
   };
 
   const clearFilters = () => {
-    setFilters({
-      minAge: "",
-      maxAge: "",
-      startDate: "",
-      endDate: "",
-    });
-    setCurrentPage(1);
+    if (shouldFetch) {
+      setFilters({
+        minAge: "",
+        maxAge: "",
+        startDate: "",
+        endDate: "",
+      });
+      setIsSearch("");
+      setSearchTerm("");
+      setFilterCleared(true);
+      setCurrentPage(1);
+    }
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen" onKeyDown={handleKeyDown}>
       <div className="flex-grow space-y-6 p-4">
         <h1 className="text-xl md:text-2xl font-semibold">Users Management</h1>
         <div className="flex gap-4 flex-wrap items-center">
           <Input
             type="text"
-            placeholder="Search by name, email or contact"
-            value={searchTerm}
-            onChange={handleSearch}
+            placeholder="Search by name, email or contact (Press Enter or click Search)"
+            value={isSearch}
+            ref={searchInputRef}
+            onChange={(e) => { setIsSearch(e.target.value); setShouldFetch(true) }}
             className="w-full md:w-1/2 lg:w-1/3"
           />
+          <Button
+            onClick={() => { setSearchTerm(isSearch); setShouldFetch(true) }}
+            className="text-sm md:text-base"
+          >
+            Search
+          </Button>
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
@@ -164,7 +202,7 @@ export default function Users() {
                   type="number"
                   name="minAge"
                   value={filters.minAge}
-                  onChange={handleFilterChange}
+                  onChange={(e) => { handleFilterChange(e); setShouldFetch(true) }}
                   placeholder="Min Age"
                 />
               </div>
@@ -176,7 +214,7 @@ export default function Users() {
                   type="number"
                   name="maxAge"
                   value={filters.maxAge}
-                  onChange={handleFilterChange}
+                  onChange={(e) => { handleFilterChange(e); setShouldFetch(true) }}
                   placeholder="Max Age"
                 />
               </div>
@@ -188,7 +226,7 @@ export default function Users() {
                   type="date"
                   name="startDate"
                   value={filters.startDate}
-                  onChange={handleFilterChange}
+                  onChange={(e) => { handleFilterChange(e); setShouldFetch(true) }}
                 />
               </div>
               <div>
@@ -199,7 +237,7 @@ export default function Users() {
                   type="date"
                   name="endDate"
                   value={filters.endDate}
-                  onChange={handleFilterChange}
+                  onChange={(e) => { handleFilterChange(e); setShouldFetch(true) }}
                 />
               </div>
             </div>
@@ -255,7 +293,7 @@ export default function Users() {
                             <Button
                               variant="outline"
                               onClick={() => {
-                                setSelectedUser(user);
+                                // setSelectedUser(user);
                                 setUpdatedUser(user);
                               }}
                             >
@@ -323,7 +361,7 @@ export default function Users() {
                                   </label>
                                   <Button
                                     className="w-[150px]"
-                                    onClick={() => {}}
+                                    onClick={() => { }}
                                   >
                                     Update User
                                   </Button>
@@ -334,12 +372,12 @@ export default function Users() {
                         </Dialog>
                         <Trash2
                           className="text-red-500 hover:text-red-700 cursor-pointer"
-                          // onClick={() =>
-                          //   handleDeleteConsultation(
-                          //     consultation._id,
-                          //     consultation.contact
-                          //   )
-                          // }
+                        // onClick={() =>
+                        //   handleDeleteConsultation(
+                        //     consultation._id,
+                        //     consultation.contact
+                        //   )
+                        // }
                         />
                       </TableCell>
                     </TableRow>

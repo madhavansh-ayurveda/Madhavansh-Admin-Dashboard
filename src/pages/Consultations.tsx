@@ -7,6 +7,13 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,10 +24,10 @@ export interface Consultation {
   _id: string;
   amount: number;
   consultationType:
-  | "General Consultation"
-  | "Follow-up"
-  | "Specific Treatment"
-  | "Emergency";
+    | "General Consultation"
+    | "Follow-up"
+    | "Specific Treatment"
+    | "Emergency";
   createdAt: string;
   name: string;
   email: string;
@@ -38,6 +45,9 @@ export interface Consultation {
     files?: string[];
     instructions?: string;
   };
+  feedbackStatus?: "pending" | "sent" | "submitted";
+  scheduledFeedbackDate?: Date;
+  feedbackId?: string;
   paymentStatus: "pending" | "completed" | "refunded";
   updatedAt: string;
   __v: number;
@@ -46,13 +56,10 @@ export interface Consultation {
 export default function Consultations() {
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [loading, setLoading] = useState(true);
-  // const [editingConsultation, setEditingConsultation] =
-    // useState<Consultation | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  // const [currentPage, setCurrentPage] = useState(1);
-  // const [itemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<string | undefined>(
     undefined
@@ -60,24 +67,50 @@ export default function Consultations() {
   const [startDate, setStartDate] = useState<string | undefined>(undefined);
   const [endDate, setEndDate] = useState<string | undefined>(undefined);
   const [isSearch, setIsSearch] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [shouldFetch, setShouldFetch] = useState(true);
+  const [filteredCleared, setFilterCleared] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "/") {
+        event.preventDefault();
+        inputRef.current?.focus();
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        inputRef.current?.blur();
+      }
+    };
+
+    // Add the event listener to the document
+    document.addEventListener("keydown", handleKeyDown);
+
+    // Clean up the event listener
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!shouldFetch) return;
+
     const fetchConsultations = async () => {
       try {
         setLoading(true);
-        const limit = 10;
         const response = await adminApi.getAllConsultations(
           currentPage,
-          limit,
+          itemsPerPage,
+
           searchTerm,
           selectedStatus,
           selectedTypes,
           startDate,
           endDate
         );
-        setSelectedTypes;
+
         if (response.success) {
           setConsultations(response.data);
           setTotalPages(response.totalPages);
@@ -87,8 +120,8 @@ export default function Consultations() {
       } finally {
         setLoading(false);
       }
+      if (filteredCleared) setShouldFetch(false);
     };
-    console.log(isSearch);
 
     fetchConsultations();
   }, [
@@ -98,8 +131,19 @@ export default function Consultations() {
     startDate,
     endDate,
     searchTerm,
+    itemsPerPage,
   ]);
 
+  const clearFilters = () => {
+    setSelectedStatus(undefined);
+    setSelectedTypes([]);
+    setStartDate(undefined);
+    setEndDate(undefined);
+    setIsSearch("");
+    setSearchTerm("");
+    setItemsPerPage(10);
+    setFilterCleared(true);
+  };
 
   // const handleCompleteConsultation = async (id: string) => {
   //   // Mark consultation as completed
@@ -115,7 +159,7 @@ export default function Consultations() {
   }
 
   return (
-    <div className="flex flex-col min-h-[90vh]">
+    <div className="flex flex-col min-h-screen">
       <div className="flex-grow space-y-6 p-4">
         <h1 className="text-xl md:text-2xl font-semibold">
           Consultations Management
@@ -126,11 +170,23 @@ export default function Consultations() {
           <Input
             ref={inputRef}
             type="text"
-            placeholder="Search Consultations"
+            placeholder="Search by ID, name, doctor, email or contact (Press Enter or click Search)"
             value={isSearch}
-            onChange={(e) => setIsSearch(e.target.value)}
-            className="w-full md:w-1/2 lg:w-1/3"
+            onChange={(e) => {
+              setIsSearch(e.target.value);
+              setShouldFetch(true);
+            }}
+            className="w-full md:w-1/2 lg:w-1/5"
           />
+          <Button
+            onClick={() => {
+              setSearchTerm(isSearch);
+              setShouldFetch(true);
+            }}
+            className="text-sm md:text-base"
+          >
+            Search
+          </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -147,6 +203,7 @@ export default function Consultations() {
                     checked={selectedStatus === status}
                     onCheckedChange={(checked) => {
                       setSelectedStatus(checked ? status : undefined);
+                      setShouldFetch(true);
                     }}
                   >
                     {status}
@@ -156,39 +213,90 @@ export default function Consultations() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <div className="startdate flex gap-4 flex-wrap items-center">
-            <label htmlFor=""> Start Date:</label>
-            <Input
-              type="date"
-              placeholder="Start Date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-full md:w-1/2 lg:w-1/2"
-            />
+          <div className="flex gap-2 items-center">
+            <span className="text-sm">Items per page:</span>
+            <Select
+              value={itemsPerPage.toString()}
+              onValueChange={(value) => {
+                setItemsPerPage(Number(value));
+                setShouldFetch(true);
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[70px]">
+                <SelectValue placeholder="10" />
+              </SelectTrigger>
+              <SelectContent className="w-[50px]">
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <div className=" flex gap-4 flex-wrap items-center">
-            <label htmlFor=""> End Date:</label>
-            <Input
-              type="date"
-              placeholder="End Date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-full md:w-1/2 lg:w-1/2"
-            />
-          </div>
+
           <Button
-            onClick={() => setSearchTerm(isSearch)}
+            onClick={() => {
+              if (shouldFetch) clearFilters();
+            }}
+            variant="outline"
             className="text-sm md:text-base"
           >
-            Search
+            Clear Filters
           </Button>
+
+          <Button
+            variant="outline"
+            onClick={() => setShowFilters(!showFilters)}
+            className="text-sm md:text-base"
+          >
+            {showFilters ? "Hide Advanced Filters" : "Show Advanced Filters"}
+          </Button>
+
+          {showFilters && (
+            <Card className="w-full p-4 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex gap-4 flex-wrap items-center">
+                  <label htmlFor="startDate" className="min-w-[80px]">
+                    Start Date:
+                  </label>
+                  <Input
+                    id="startDate"
+                    type="date"
+                    placeholder="Start Date"
+                    value={startDate}
+                    onChange={(e) => {
+                      setStartDate(e.target.value);
+                      setShouldFetch(true);
+                    }}
+                    className="flex-1"
+                  />
+                </div>
+                <div className="flex gap-4 flex-wrap items-center">
+                  <label htmlFor="endDate" className="min-w-[80px]">
+                    End Date:
+                  </label>
+                  <Input
+                    id="endDate"
+                    type="date"
+                    placeholder="End Date"
+                    value={endDate}
+                    onChange={(e) => {
+                      setEndDate(e.target.value);
+                      setShouldFetch(true);
+                    }}
+                    className="flex-1"
+                  />
+                </div>
+              </div>
+            </Card>
+          )}
         </div>
 
         <Card className="overflow-x-auto">
-          <div className="relative overflow-y-auto max-h-[60vh]">
+          <div className="relative overflow-y-auto max-h-[70vh]">
             <ConsultationTable data={consultations} />
           </div>
-
         </Card>
       </div>
 
