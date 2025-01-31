@@ -38,3 +38,10 @@ export interface ConsultationStats {
     totalAmount: number;
   }>;
 }
+
+export interface Medicine {
+  name: string;
+  price: number;
+  unit: string;
+  stock: number;
+}

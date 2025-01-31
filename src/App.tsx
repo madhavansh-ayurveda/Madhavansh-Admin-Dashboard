@@ -7,6 +7,7 @@ import Users from './pages/Users'
 import Doctors from './pages/Doctors'
 import Consultations from './pages/Consultations'
 import ProtectedRoute from './components/ProtectedRoute'
+import MedicineStock from './pages/MedicineStock'
 
 function App() {
     return (
@@ -23,6 +24,7 @@ function App() {
                     <Route path="/users" element={<Users />} />
                     <Route path="/doctors" element={<Doctors />} />
                     <Route path="/consultations" element={<Consultations />} />
+                    <Route path="/medicine-stock" element={<MedicineStock />} />
                 </Route>
             </Routes>
         </Router>

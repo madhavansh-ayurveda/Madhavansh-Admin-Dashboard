@@ -67,12 +67,12 @@ export default function Dashboard() {
     },
     {
       name: "Pending Consultations",
-      value: consultationStats?.statusStats[0].result.pending.count || 0,
+      value: consultationStats?.statusStats[0]?.result?.pending.count || 0,
       icon: Calendar,
     },
     {
       name: "Comfirmed Consultations",
-      value: consultationStats?.statusStats[0].result.confirmed?.count || 0,
+      value: consultationStats?.statusStats[0]?.result?.confirmed?.count || 0,
       icon: Calendar,
     },
     {
@@ -98,7 +98,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Dashboard Overview</h1>
+      <h1 className="text-2xl font-semibold py-6">Dashboard Overview</h1>
       <p>User: {user?.name || "No user logged in"}</p>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat) => (

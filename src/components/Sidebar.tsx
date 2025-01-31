@@ -1,6 +1,6 @@
 // import React from 'react'
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, Calendar, Settings, Stethoscope, X } from "lucide-react";
+import { Home, Users, Calendar, Settings, Stethoscope, X, Pill } from "lucide-react";
 import { cn } from "../lib/utils";
 
 interface SidebarProps {
@@ -13,6 +13,7 @@ const navigation = [
   { name: "Users", href: "/users", icon: Users },
   { name: "Doctors", href: "/doctors", icon: Stethoscope },
   { name: "Consultations", href: "/consultations", icon: Calendar },
+  { name: "Medicine Stock", href: "/medicine-stock", icon: Pill },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
