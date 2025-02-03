@@ -108,7 +108,7 @@ export const adminApi = {
   getAllConsultations: async (
     page: number,
     limit: number,
-    search?: string,
+    searchTerm?: string,
     status?: string,
     types?: string[],
     startDate?: string,
@@ -118,7 +118,7 @@ export const adminApi = {
       const queryParams = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
-        ...(search && { search }),
+        ...(searchTerm && { searchTerm }),
         ...(status && { status }),
         ...(types?.length && { types: types.join(",") }),
         ...(startDate && { startDate }),

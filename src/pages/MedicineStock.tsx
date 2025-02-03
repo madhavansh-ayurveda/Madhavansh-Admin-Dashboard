@@ -17,21 +17,21 @@ const MedicineStock = () => {
   });
 
   const units = ["gram", "mg", "ml", "tablet", "capsule"];
-  const departmentSpeciality = [
-    { value: "Skin & Hair", label: "Skin & Hair" },
-    { value: "Infertility and PCOD", label: "Infertility and PCOD" },
-    {
-      value: "Kidney and Gallbladder Stone",
-      label: "Kidney and Gallbladder Stone",
-    },
-    {
-      value: "Arthritis and Pain Management",
-      label: "Arthritis and Pain Management",
-    },
-    { value: "Life style disorder", label: "Life style disorder" },
-    { value: "Glaucoma", label: "Glaucoma" },
-    { value: "Immunity booster dose", label: "Immunity booster dose" },
-  ];
+  // const departmentSpeciality = [
+  //   { value: "Skin & Hair", label: "Skin & Hair" },
+  //   { value: "Infertility and PCOD", label: "Infertility and PCOD" },
+  //   {
+  //     value: "Kidney and Gallbladder Stone",
+  //     label: "Kidney and Gallbladder Stone",
+  //   },
+  //   {
+  //     value: "Arthritis and Pain Management",
+  //     label: "Arthritis and Pain Management",
+  //   },
+  //   { value: "Life style disorder", label: "Life style disorder" },
+  //   { value: "Glaucoma", label: "Glaucoma" },
+  //   { value: "Immunity booster dose", label: "Immunity booster dose" },
+  // ];
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const newMedicine = {
@@ -61,6 +61,8 @@ const MedicineStock = () => {
 
   const handleDelete = async (name: string) => {
     try {
+      console.log(name);
+      
       await medicineApi.deleteMedicine(name);
       setMedicines(medicines?.filter((medicine) => medicine.name !== name));
     } catch (err: any) {
@@ -169,7 +171,15 @@ const MedicineStock = () => {
 
             <div className="flex-1">
               <MultiSelect
-                options={departmentSpeciality}
+                options={[
+                  "Skin & Hair",
+                  "Infertility and PCOD",
+                  "Kidney and Gallbladder Stone",
+                  "Arthritis and Pain Management",
+                  "Life style disorder",
+                  "Glaucoma",
+                  "Immunity booster dose",
+                ]}
                 onChange={(e: string[]) => {
                   setDepartment(e);
                 }}

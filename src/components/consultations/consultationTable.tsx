@@ -39,6 +39,8 @@ import { useNavigate } from "react-router-dom";
 // import { useSelector } from "react-redux";
 import { adminApi } from "@/api/adminApi";
 import { cn } from "@/lib/utils";
+// import MultiSelect from "../ui/multiple-select";
+import MedicinePrescription from "./MedcinePercrptionSelect";
 
 interface FeedbackScheduleState {
   type: "immediate" | "scheduled";
@@ -51,7 +53,8 @@ interface ConsultationTableProps {
 }
 
 const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
-  const [consultations, setConsultations] = useState<Consultation[]>(data);
+  const [consultationsArray, setConsultationsArray] =
+    useState<Consultation[]>(data);
   const [isConsultationUpdated, setIsConsultationUpdated] =
     useState<boolean>(false);
   const [editingConsultation, setEditingConsultation] =
@@ -62,13 +65,25 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
       days: 1,
     });
   const [showDiscountInput, setShowDiscountInput] = useState(false);
-  const [discountValue, setDiscountValue] = useState("");
-  const [discountAmount, setDiscountAmount] = useState<number>(0);
-  const [discountType, setDiscountType] = useState<"percentage" | "fixed">(
-    "percentage"
-  );
+  const [discountValue, setDiscountValue] = useState<number | undefined>();
+  const [discountAmount, setDiscountAmount] = useState<number | undefined>(0);
+  const [discountType, setDiscountType] = useState<
+    "percentage" | "fixed" | undefined
+  >("percentage");
   // const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // console.log(consultationsArray);
+    if (editingConsultation?.discount) {
+      setShowDiscountInput(true);
+      setDiscountAmount(editingConsultation.discount.amount);
+      setDiscountType(
+        editingConsultation.discount.discountType as "percentage" | "fixed"
+      );
+      setDiscountValue(editingConsultation.discount.value);
+    }
+  }, [editingConsultation]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -106,19 +121,21 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
       editConsultationData = {
         ...editingConsultation,
         discount: {
-          dtype: discountType,
-          value: parseFloat(discountValue),
+          discountType: discountType,
+          value: discountValue,
           amount: discountAmount,
         },
       };
     }
 
     try {
+      // console.log(editConsultationData);
+
       await adminApi.updateConsultation(
         editingConsultation._id,
         editConsultationData
       );
-      // dispatch(clearCacheByPrefix("consultations_")); // Clear all consultation-related cache
+      // dispatch(clearCacheByPrefix("consultationsArray_")); // Clear all consultation-related cache
 
       // Reset states
       setEditingConsultation(null);
@@ -165,8 +182,8 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
     console.log(response);
 
     if (response.success) {
-      setConsultations((prevConsultations) =>
-        prevConsultations.filter((consultation) => consultation._id !== id)
+      setConsultationsArray((prevconsultationsArray) =>
+        prevconsultationsArray.filter((consultation) => consultation._id !== id)
       );
     }
   };
@@ -193,16 +210,6 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
     }
   };
 
-  useEffect(() => {
-    console.log(editingConsultation);
-  });
-
-  useEffect(() => {
-    if (editingConsultation) {
-      // setOriginalAmount(editingConsultation.amount);
-    }
-  }, [editingConsultation]);
-
   return (
     <>
       <Table className="">
@@ -217,6 +224,9 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
               Patient
             </TableHead>
             <TableHead className="min-w-[100px] border uppercase font-medium text-xs">
+              Contact
+            </TableHead>
+            <TableHead className="min-w-[100px] border uppercase font-medium text-xs">
               Doctor
             </TableHead>
             <TableHead className="hidden md:table-cell min-w-[100px] border uppercase font-medium text-xs">
@@ -228,7 +238,7 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
             <TableHead className="hidden sm:table-cell min-w-[50px] border uppercase font-medium text-xs">
               Time
             </TableHead>
-            <TableHead className="min-w-[100px] border uppercase font-medium text-xs">
+            <TableHead className=" hidden sm:table-cell min-w-[60px] border uppercase font-medium text-xs">
               Status
             </TableHead>
             <TableHead className="min-w-[50px] border uppercase font-medium text-xs">
@@ -241,15 +251,18 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
         </TableHeader>
 
         <TableBody>
-          {consultations &&
-            consultations.length > 0 &&
-            consultations.map((consultation) => (
+          {consultationsArray &&
+            consultationsArray.length > 0 &&
+            consultationsArray.map((consultation) => (
               <TableRow
                 key={consultation._id}
                 className={`text-sm md:text-base hover:bg-gray-100`}
               >
                 <TableCell className="whitespace-nowrap min-w-[100px] border-b">
                   {consultation.name || "N/A"}
+                </TableCell>
+                <TableCell className="whitespace-nowrap min-w-[100px] border-b">
+                  {consultation.contact}
                 </TableCell>
                 <TableCell className="whitespace-nowrap min-w-[100px] border-b">
                   Dr. {consultation.doctor.doctorName || "N/A"}
@@ -260,10 +273,10 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
                 <TableCell className="hidden sm:table-cell min-w-[100px] border-b">
                   {new Date(consultation.date).toLocaleDateString()}
                 </TableCell>
-                <TableCell className="hidden sm:table-cell min-w-[100px] border-b">
+                <TableCell className="hidden sm:table-cell min-w-[50px] border-b">
                   {consultation.timeSlot}
                 </TableCell>
-                <TableCell>
+                <TableCell className="hidden sm:table-cell min-w-[50px] border-b">
                   <span
                     className={`p-2 px-4 text-xs font-semibold rounded-full ${getStatusColor(
                       consultation.status
@@ -273,7 +286,7 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
                   </span>
                 </TableCell>
                 <TableCell>₹{consultation.amount}</TableCell>
-                <TableCell className="flex flex-col min-w-[100px] border-b sm:flex-row gap-2 md:gap-5 lg:gap-4 items-start sm:items-center p-0 py-4">
+                <TableCell className="flex flex-col min-w-[100px] border-b sm:flex-row gap-2 md:gap-5 lg:gap-4 items-start sm:items-center p-0 py-4 px-2">
                   <div className="flex flex-col gap-3">
                     <Dialog>
                       <DialogTrigger asChild>
@@ -553,9 +566,11 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
                                     />
                                     <Button
                                       variant="outline"
-                                      onClick={() =>
-                                        setShowDiscountInput(!showDiscountInput)
-                                      }
+                                      onClick={() => {
+                                        setShowDiscountInput(
+                                          !showDiscountInput
+                                        );
+                                      }}
                                       className="w-56"
                                     >
                                       {showDiscountInput
@@ -609,7 +624,9 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
                                         }
                                         value={discountValue}
                                         onChange={(e) => {
-                                          setDiscountValue(e.target.value);
+                                          setDiscountValue(
+                                            parseFloat(e.target.value)
+                                          );
                                           applyDiscount(
                                             parseFloat(e.target.value)
                                           );
@@ -670,6 +687,7 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
                                 Prescription
                               </h3>
                               <div className="space-y-4">
+                                {/* Pescription Upload */}
                                 <div className="grid grid-cols-4 items-center gap-4">
                                   <label>Upload Prescriptions</label>
                                   <div className="col-span-3">
@@ -796,6 +814,23 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
                                       editingConsultation.status === "completed"
                                     }
                                   />
+                                </div>
+
+                                {/* Medicine */}
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                  <label htmlFor="">Medicine</label>
+                                  {/* <MultiSelect
+                                    options={[
+                                      "Skin & Hair",
+                                      "Infertility and PCOD",
+                                      "Kidney and Gallbladder Stone",
+                                      "Arthritis and Pain Management",
+                                      "Life style disorder",
+                                      "Glaucoma",
+                                      "Immunity booster dose",
+                                    ]}
+                                  /> */}
+                                  <MedicinePrescription consultationId={consultation._id}/>
                                 </div>
                               </div>
                             </div>
@@ -994,8 +1029,10 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
                 </TableCell>
               </TableRow>
             ))}
-          {!consultations.length && (
-            <p className="flex justify-center py-4">No consultations found.</p>
+          {!consultationsArray.length && (
+            <p className="flex justify-center py-4">
+              No consultationsArray found.
+            </p>
           )}
         </TableBody>
       </Table>

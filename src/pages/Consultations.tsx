@@ -24,9 +24,9 @@ export interface Consultation {
   _id: string;
   amount: number;
   discount?: {
-    dtype: string;
-    value: number;
-    amount: number;
+    discountType?: string;
+    value?: number;
+    amount?: number;
   };
   consultationType:
     | "General Consultation"
