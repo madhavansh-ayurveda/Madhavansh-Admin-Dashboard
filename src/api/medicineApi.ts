@@ -3,19 +3,19 @@ import { AdminApi } from "./axios";
 
 export const medicineApi = {
     addMedicine: async (medicine: Medicine) => {
-        const response = await AdminApi.post('/api/medicines-stock', medicine);
+        const response = await AdminApi.post('/medicines-stock/', medicine);
         return response.data;
     },
     getMedicines: async () => {
-        const response = await AdminApi.get('/api/medicines-stock');
+        const response = await AdminApi.get('/medicines-stock');
         return response.data;
     },
-    deleteMedicine: async (id: string) => {
-        const response = await AdminApi.delete(`/api/medicines-stock/${id}`);
+    deleteMedicine: async (name: string) => {
+        const response = await AdminApi.delete(`/medicines-stock/${name}`);
         return response.data;
     },
     editMedicine: async (id: string, medicine: Medicine) => {
-        const response = await AdminApi.put(`/api/medicines-stock/${id}`, medicine);
+        const response = await AdminApi.put(`/medicines-stock/${id}`, medicine);
         return response.data;
     }
 }

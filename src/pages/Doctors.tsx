@@ -71,10 +71,9 @@ export default function Doctors() {
     fetchDoctors();
   }, [currentPage, searchTerm]);
 
-
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.key === '/') {
+      if (event.key === "/") {
         event.preventDefault();
         searchInputRef.current?.focus();
       } else if (event.key === "Escape") {
@@ -83,10 +82,10 @@ export default function Doctors() {
       }
     };
 
-    window.addEventListener('keydown', handleKeyPress);
+    window.addEventListener("keydown", handleKeyPress);
 
     return () => {
-      window.removeEventListener('keydown', handleKeyPress);
+      window.removeEventListener("keydown", handleKeyPress);
     };
   }, []);
 
@@ -182,9 +181,18 @@ export default function Doctors() {
     <div className="flex flex-col min-h-screen">
       <div className="flex-grow space-y-6 p-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-xl md:text-2xl font-semibold">
-            Doctors Management
-          </h1>
+          <h1 className="text-xl md:text-2xl font-semibold">Doctors</h1>
+        </div>
+
+        <div className="flex">
+          <Input
+            type="text"
+            placeholder="Search Doctors"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            ref={searchInputRef}
+            className="w-full md:w-1/2 lg:w-1/3"
+          />
           <Button
             onClick={() => setShowAddForm(true)}
             className="bg-primary-600 text-white hover:bg-primary-700 flex items-center"
@@ -192,15 +200,6 @@ export default function Doctors() {
             + New Doctor
           </Button>
         </div>
-
-        <Input
-          type="text"
-          placeholder="Search Doctors"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          ref={searchInputRef}
-          className="w-full md:w-1/2 lg:w-1/3"
-        />
 
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -234,8 +233,9 @@ export default function Doctors() {
                 currentDoctors.map((doctor, index) => (
                   <tr
                     key={doctor._id}
-                    className={`hover:bg-gray-100 text-sm md:text-base ${index % 2 ? "bg-gray-50" : ""
-                      }`}
+                    className={`hover:bg-gray-100 text-sm md:text-base ${
+                      index % 2 ? "bg-gray-50" : ""
+                    }`}
                   >
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {doctor.name}

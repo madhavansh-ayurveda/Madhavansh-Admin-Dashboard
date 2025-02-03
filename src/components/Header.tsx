@@ -34,7 +34,7 @@ export default function Header({ onMenuButtonClick }: HeaderProps) {
           <Button
             onClick={handleLogout}
             variant={"destructive"}
-            className="text-sm text-black hover:text-gray-800"
+            className="text-sm hover:text-gray-800"
           >
             Logout
           </Button>

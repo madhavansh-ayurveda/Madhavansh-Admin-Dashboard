@@ -1,6 +1,14 @@
 // import React from 'react'
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, Calendar, Settings, Stethoscope, X, Pill } from "lucide-react";
+import {
+  Home,
+  Users,
+  Calendar,
+  Settings,
+  Stethoscope,
+  X,
+  Pill,
+} from "lucide-react";
 import { cn } from "../lib/utils";
 
 interface SidebarProps {
@@ -24,7 +32,7 @@ export default function Sidebar({ open, setOpen }: SidebarProps) {
     <>
       <div
         className={cn(
-          "fixed inset-0 bg-gray-600 bg-opacity-75 transition-opacity lg:hidden",
+          "fixed inset-0 bg-gray-600 bg-opacity-75 z-50 transition-opacity lg:hidden",
           open
             ? "opacity-100 ease-out duration-300"
             : "opacity-0 ease-in duration-200 pointer-events-none"
@@ -35,7 +43,8 @@ export default function Sidebar({ open, setOpen }: SidebarProps) {
       <div
         className={cn(
           "fixed inset-y-0 left-0 flex flex-col w-56 bg-white border-r transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto",
-          open ? "translate-x-0" : "-translate-x-full"
+          open ? "translate-x-0" : "-translate-x-full",
+          "z-50"
         )}
       >
         <div className="flex items-center justify-between h-16 px-4 border-b">

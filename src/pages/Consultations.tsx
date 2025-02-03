@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { adminApi } from "@/api/adminApi";
 import { Card } from "@/components/ui/card";
 import {
@@ -23,6 +23,11 @@ import ConsultationTable from "@/components/consultations/consultationTable";
 export interface Consultation {
   _id: string;
   amount: number;
+  discount?: {
+    dtype: string;
+    value: number;
+    amount: number;
+  };
   consultationType:
     | "General Consultation"
     | "Follow-up"
@@ -35,8 +40,10 @@ export interface Consultation {
     doctorName: string;
     doctorId: string;
   };
+  department: string;
   contact: string;
   date: string;
+  mode: string;
   timeSlot: string;
   symptoms: string;
   status: "pending" | "confirmed" | "completed" | "cancelled";
@@ -44,6 +51,10 @@ export interface Consultation {
   prescription: {
     files?: string[];
     instructions?: string;
+  };
+  additionalInfo?: {
+    img?: string[];
+    file?: string[];
   };
   feedbackStatus?: "pending" | "sent" | "submitted";
   scheduledFeedbackDate?: Date;
@@ -94,35 +105,32 @@ export default function Consultations() {
     };
   }, []);
 
+  const fetchConsultations = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await adminApi.getAllConsultations(
+        currentPage,
+        itemsPerPage,
+        searchTerm,
+        selectedStatus,
+        selectedTypes,
+        startDate,
+        endDate
+      );
+
+      if (response.success) {
+        setConsultations(response.data);
+        setTotalPages(response.totalPages);
+      }
+    } catch (error) {
+      console.error("Error fetching consultations:", error);
+    } finally {
+      setLoading(false);
+    }
+    if (filteredCleared) setShouldFetch(false);
+  }, []);
   useEffect(() => {
     if (!shouldFetch) return;
-
-    const fetchConsultations = async () => {
-      try {
-        setLoading(true);
-        const response = await adminApi.getAllConsultations(
-          currentPage,
-          itemsPerPage,
-
-          searchTerm,
-          selectedStatus,
-          selectedTypes,
-          startDate,
-          endDate
-        );
-
-        if (response.success) {
-          setConsultations(response.data);
-          setTotalPages(response.totalPages);
-        }
-      } catch (error) {
-        console.error("Error fetching consultations:", error);
-      } finally {
-        setLoading(false);
-      }
-      if (filteredCleared) setShouldFetch(false);
-    };
-
     fetchConsultations();
   }, [
     currentPage,
@@ -161,10 +169,7 @@ export default function Consultations() {
   return (
     <div className="flex flex-col min-h-screen">
       <div className="flex-grow space-y-6 p-4">
-        <h1 className="text-xl md:text-2xl font-semibold">
-          Consultations Management
-        </h1>
-
+        <h1 className="text-xl md:text-2xl font-semibold">Consultations</h1>
         {/* Search Filters */}
         <div className="flex gap-4 flex-wrap items-center">
           <Input
@@ -294,7 +299,7 @@ export default function Consultations() {
         </div>
 
         <Card className="overflow-x-auto">
-          <div className="relative overflow-y-auto max-h-[70vh]">
+          <div className="relative overflow-y-auto max-h-[70vh] ">
             <ConsultationTable data={consultations} />
           </div>
         </Card>

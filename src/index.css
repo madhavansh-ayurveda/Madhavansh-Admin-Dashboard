@@ -13,6 +13,22 @@ body {
   background: rgb(var(--background-end-rgb));
 }
 
+::-webkit-scrollbar {
+  width: 7px; /* Width of the scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Color of the track */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d5d5d5; /* Color of the scrollbar thumb */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #c6c6c6; /* Color of the scrollbar thumb on hover */
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

@@ -44,4 +44,13 @@ export interface Medicine {
   price: number;
   unit: string;
   stock: number;
+  relatedToTreatments: string[];
+}
+
+export interface ApiMedicineResponse {
+  _id?: string;
+  name: string;
+  price: number;
+  unit: string;
+  stock: number;
 }

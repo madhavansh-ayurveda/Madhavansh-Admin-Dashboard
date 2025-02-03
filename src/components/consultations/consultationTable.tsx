@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -29,18 +29,21 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Consultation } from "@/pages/Consultations";
 import { useNavigate } from "react-router-dom";
-import {
-  // setCacheData,
-  // selectCacheData,
-  clearCacheByPrefix,
-  // CACHE_DURATIONS,
-} from "@/store/cacheSlice";
-import { useDispatch } from "react-redux";
+// import {
+//   // setCacheData,
+//   // selectCacheData,
+//   clearCacheByPrefix,
+//   // CACHE_DURATIONS,
+// } from "@/store/cacheSlice";
+// import { useDispatch } from "react-redux";
+// import { useSelector } from "react-redux";
 import { adminApi } from "@/api/adminApi";
+import { cn } from "@/lib/utils";
 
 interface FeedbackScheduleState {
   type: "immediate" | "scheduled";
   days?: number;
+  discountAmount?: number;
 }
 
 interface ConsultationTableProps {
@@ -58,7 +61,13 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
       type: "immediate",
       days: 1,
     });
-  const dispatch = useDispatch();
+  const [showDiscountInput, setShowDiscountInput] = useState(false);
+  const [discountValue, setDiscountValue] = useState("");
+  const [discountAmount, setDiscountAmount] = useState<number>(0);
+  const [discountType, setDiscountType] = useState<"percentage" | "fixed">(
+    "percentage"
+  );
+  // const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const getStatusColor = (status: string) => {
@@ -92,12 +101,24 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
   const handleUpdateConsultation = async () => {
     if (!editingConsultation) return;
 
+    let editConsultationData = editingConsultation;
+    if (discountValue) {
+      editConsultationData = {
+        ...editingConsultation,
+        discount: {
+          dtype: discountType,
+          value: parseFloat(discountValue),
+          amount: discountAmount,
+        },
+      };
+    }
+
     try {
       await adminApi.updateConsultation(
         editingConsultation._id,
-        editingConsultation
+        editConsultationData
       );
-      dispatch(clearCacheByPrefix("consultations_")); // Clear all consultation-related cache
+      // dispatch(clearCacheByPrefix("consultations_")); // Clear all consultation-related cache
 
       // Reset states
       setEditingConsultation(null);
@@ -150,25 +171,72 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
     }
   };
 
+  const applyDiscount = (discount: number) => {
+    if (editingConsultation && discount) {
+      if (!isNaN(discount)) {
+        let discountedAmount = editingConsultation.amount;
+        if (discountType === "percentage") {
+          discountedAmount =
+            editingConsultation.amount -
+            (editingConsultation.amount * discount) / 100;
+        } else {
+          discountedAmount = editingConsultation.amount - discount;
+        }
+        setDiscountAmount(discountedAmount);
+        // handleConsultationInputChange(
+        //   "amount",
+        //   Math.max(discountedAmount, 0)
+        // );
+      } else {
+        setDiscountAmount(editingConsultation?.amount);
+      }
+    }
+  };
+
+  useEffect(() => {
+    console.log(editingConsultation);
+  });
+
+  useEffect(() => {
+    if (editingConsultation) {
+      // setOriginalAmount(editingConsultation.amount);
+    }
+  }, [editingConsultation]);
+
   return (
     <>
       <Table className="">
-        <TableHeader className="sticky top-0 bg-white z-10 border-b shadow-md">
+        <TableHeader
+          className={cn(
+            "top-0 border-b shadow-md"
+            // isSidebarOpen ? "bg-gray-200" : "bg-gray-50"
+          )}
+        >
           <TableRow>
-            <TableHead className="min-w-[100px] border">Patient</TableHead>
-            <TableHead className="min-w-[100px] border">Doctor</TableHead>
-            <TableHead className="hidden md:table-cell min-w-[100px] border">
+            <TableHead className="min-w-[100px] border uppercase font-medium text-xs">
+              Patient
+            </TableHead>
+            <TableHead className="min-w-[100px] border uppercase font-medium text-xs">
+              Doctor
+            </TableHead>
+            <TableHead className="hidden md:table-cell min-w-[100px] border uppercase font-medium text-xs">
               Type
             </TableHead>
-            <TableHead className="hidden sm:table-cell min-w-[50px] border">
+            <TableHead className="hidden sm:table-cell min-w-[50px] border uppercase font-medium text-xs">
               Date
             </TableHead>
-            <TableHead className="hidden sm:table-cell min-w-[50px] border">
+            <TableHead className="hidden sm:table-cell min-w-[50px] border uppercase font-medium text-xs">
               Time
             </TableHead>
-            <TableHead className="min-w-[100px] border">Status</TableHead>
-            <TableHead className="min-w-[50px] border">Amount</TableHead>
-            <TableHead className="min-w-[100px] border">Actions</TableHead>
+            <TableHead className="min-w-[100px] border uppercase font-medium text-xs">
+              Status
+            </TableHead>
+            <TableHead className="min-w-[50px] border uppercase font-medium text-xs">
+              Amount
+            </TableHead>
+            <TableHead className="min-w-[100px] border uppercase font-medium text-xs">
+              Actions
+            </TableHead>
           </TableRow>
         </TableHeader>
 
@@ -197,7 +265,7 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
                 </TableCell>
                 <TableCell>
                   <span
-                    className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                    className={`p-2 px-4 text-xs font-semibold rounded-full ${getStatusColor(
                       consultation.status
                     )}`}
                   >
@@ -211,7 +279,10 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
                       <DialogTrigger asChild>
                         <Button
                           variant="outline"
-                          onClick={() => setEditingConsultation(consultation)}
+                          onClick={() => {
+                            setEditingConsultation(consultation);
+                            // setOriginalAmount(consultation.amount);
+                          }}
                         >
                           View More
                         </Button>
@@ -224,188 +295,339 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
                             </DialogTitle>
                           </DialogHeader>
                           <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
                               {/* Basic Information */}
-                              <div className="space-y-4">
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                  <label>Patient Name</label>
-                                  <Input
-                                    className="col-span-3"
-                                    value={editingConsultation?.name || ""}
-                                    disabled
-                                  />
-                                </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                  <label>Email</label>
-                                  <Input
-                                    className="col-span-3"
-                                    value={editingConsultation?.email || ""}
-                                    onChange={(e) =>
-                                      handleConsultationInputChange(
-                                        "email",
-                                        e.target.value
-                                      )
-                                    }
-                                    disabled
-                                  />
-                                </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                  <label>Amount (₹)</label>
-                                  <Input
-                                    type="number"
-                                    className="col-span-3"
-                                    value={editingConsultation?.amount || 0}
-                                    onChange={(e) =>
-                                      handleConsultationInputChange(
-                                        "amount",
-                                        parseInt(e.target.value)
-                                      )
-                                    }
-                                    disabled={
-                                      editingConsultation.status === "completed"
-                                    }
-                                  />
-                                </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                  <label>Date</label>
-                                  <Input
-                                    type="date"
-                                    className="col-span-3"
-                                    value={
-                                      editingConsultation?.date.split("T")[0] ||
-                                      ""
-                                    }
-                                    onChange={(e) =>
-                                      handleConsultationInputChange(
-                                        "date",
-                                        e.target.value
-                                      )
-                                    }
-                                    disabled={
-                                      editingConsultation.status === "completed"
-                                    }
-                                  />
+                              {/* <div className="space-y-4"> */}
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <label>Patient Name</label>
+                                <Input
+                                  className="col-span-3"
+                                  value={editingConsultation?.name || ""}
+                                  disabled
+                                />
+                              </div>
+
+                              {/* Doctor */}
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <label>Doctor</label>
+                                <Input
+                                  className="col-span-3"
+                                  value={`Dr. ${
+                                    editingConsultation?.doctor?.doctorName ||
+                                    "N/A"
+                                  }`}
+                                  disabled
+                                />
+                              </div>
+
+                              {/* Email */}
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <label>Email</label>
+                                <Input
+                                  className="col-span-3"
+                                  value={editingConsultation?.email || ""}
+                                  onChange={(e) =>
+                                    handleConsultationInputChange(
+                                      "email",
+                                      e.target.value
+                                    )
+                                  }
+                                  disabled
+                                />
+                              </div>
+
+                              {/* Date */}
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <label>Date</label>
+                                <Input
+                                  type="date"
+                                  className="col-span-3"
+                                  value={
+                                    editingConsultation?.date.split("T")[0] ||
+                                    ""
+                                  }
+                                  onChange={(e) =>
+                                    handleConsultationInputChange(
+                                      "date",
+                                      e.target.value
+                                    )
+                                  }
+                                  disabled={
+                                    editingConsultation.status === "completed"
+                                  }
+                                />
+                              </div>
+
+                              {/* Contact */}
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <label>Contact</label>
+                                <Input
+                                  className="col-span-3"
+                                  value={editingConsultation?.contact || ""}
+                                  onChange={(e) =>
+                                    handleConsultationInputChange(
+                                      "contact",
+                                      e.target.value
+                                    )
+                                  }
+                                  disabled={
+                                    editingConsultation.status === "completed"
+                                  }
+                                />
+                              </div>
+
+                              {/* Department */}
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <label>Department</label>
+                                <Input
+                                  className="col-span-3"
+                                  value={editingConsultation?.department || ""}
+                                  onChange={(e) =>
+                                    handleConsultationInputChange(
+                                      "department",
+                                      e.target.value
+                                    )
+                                  }
+                                  disabled
+                                  // disabled={
+                                  //   editingConsultation.status === "completed"
+                                  // }
+                                />
+                              </div>
+
+                              {/* Mode */}
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <label>Mode</label>
+                                <Select
+                                  value={editingConsultation?.mode || ""}
+                                  onValueChange={(e) =>
+                                    handleConsultationInputChange("mode", e)
+                                  }
+                                  disabled={
+                                    editingConsultation.status === "completed"
+                                  }
+                                >
+                                  <SelectTrigger className="col-span-3">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="online">
+                                      Online
+                                    </SelectItem>
+                                    <SelectItem value="offline">
+                                      Offline
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              {/* Time Slot */}
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <label>Time Slot</label>
+                                <Input
+                                  className="col-span-3"
+                                  value={editingConsultation?.timeSlot || ""}
+                                  onChange={(e) =>
+                                    handleConsultationInputChange(
+                                      "timeSlot",
+                                      e.target.value
+                                    )
+                                  }
+                                  disabled={
+                                    editingConsultation.status === "completed"
+                                  }
+                                />
+                              </div>
+
+                              {/* Status */}
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <label>Status</label>
+                                <Select
+                                  value={editingConsultation?.status}
+                                  onValueChange={(value) =>
+                                    handleConsultationInputChange(
+                                      "status",
+                                      value
+                                    )
+                                  }
+                                  disabled={
+                                    editingConsultation.status === "completed"
+                                  }
+                                >
+                                  <SelectTrigger className="col-span-3">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="pending">
+                                      Pending
+                                    </SelectItem>
+                                    <SelectItem value="confirmed">
+                                      Confirmed
+                                    </SelectItem>
+                                    <SelectItem value="completed">
+                                      Completed
+                                    </SelectItem>
+                                    <SelectItem value="cancelled">
+                                      Cancelled
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              {/* Payment Status */}
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <label>Payment Status</label>
+                                <Select
+                                  value={editingConsultation?.paymentStatus}
+                                  onValueChange={(value) =>
+                                    handleConsultationInputChange(
+                                      "paymentStatus",
+                                      value
+                                    )
+                                  }
+                                  disabled={
+                                    editingConsultation.status === "completed"
+                                  }
+                                >
+                                  <SelectTrigger className="col-span-3">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="pending">
+                                      Pending
+                                    </SelectItem>
+                                    <SelectItem value="completed">
+                                      Completed
+                                    </SelectItem>
+                                    <SelectItem value="refunded">
+                                      Refunded
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              {/* Type */}
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <label>Consultation Type</label>
+                                <Select
+                                  value={editingConsultation?.consultationType}
+                                  onValueChange={(value) =>
+                                    handleConsultationInputChange(
+                                      "consultationType",
+                                      value
+                                    )
+                                  }
+                                  disabled={
+                                    editingConsultation.status === "completed"
+                                  }
+                                >
+                                  <SelectTrigger className="col-span-3">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="General Consultation">
+                                      General Consultation
+                                    </SelectItem>
+                                    <SelectItem value="Follow-up">
+                                      Follow-up
+                                    </SelectItem>
+                                    <SelectItem value="Specific Treatment">
+                                      Specific Treatment
+                                    </SelectItem>
+                                    <SelectItem value="Emergency">
+                                      Emergency
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              {/* Amount */}
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <label>Original Amount (₹)</label>
+                                <div className="col-span-3 space-y-2">
+                                  <div className="flex gap-2">
+                                    <Input
+                                      type="number"
+                                      value={editingConsultation?.amount}
+                                      disabled
+                                    />
+                                    <Button
+                                      variant="outline"
+                                      onClick={() =>
+                                        setShowDiscountInput(!showDiscountInput)
+                                      }
+                                      className="w-56"
+                                    >
+                                      {showDiscountInput
+                                        ? "Cancel Discount"
+                                        : "Apply Discount"}
+                                    </Button>
+                                  </div>
                                 </div>
                               </div>
 
-                              <div className="space-y-4">
+                              {/* Discounted Amount */}
+                              {showDiscountInput && (
                                 <div className="grid grid-cols-4 items-center gap-4">
-                                  <label>Time Slot</label>
-                                  <Input
-                                    className="col-span-3"
-                                    value={editingConsultation?.timeSlot || ""}
-                                    onChange={(e) =>
-                                      handleConsultationInputChange(
-                                        "timeSlot",
-                                        e.target.value
-                                      )
-                                    }
-                                    disabled={
-                                      editingConsultation.status === "completed"
-                                    }
-                                  />
+                                  <label>Discounted Amount (₹)</label>
+                                  <div className="col-span-3 space-y-2">
+                                    <Input
+                                      type="number"
+                                      value={
+                                        discountAmount ||
+                                        editingConsultation.amount
+                                      }
+                                      disabled
+                                    />
+                                    <div className="flex gap-2 items-center">
+                                      <Select
+                                        value={discountType}
+                                        onValueChange={(value) =>
+                                          setDiscountType(
+                                            value as "percentage" | "fixed"
+                                          )
+                                        }
+                                      >
+                                        <SelectTrigger className="w-24">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="percentage">
+                                            %
+                                          </SelectItem>
+                                          <SelectItem value="fixed">
+                                            ₹
+                                          </SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                      <Input
+                                        type="number"
+                                        placeholder={
+                                          discountType === "percentage"
+                                            ? "Discount %"
+                                            : "Discount amount"
+                                        }
+                                        value={discountValue}
+                                        onChange={(e) => {
+                                          setDiscountValue(e.target.value);
+                                          applyDiscount(
+                                            parseFloat(e.target.value)
+                                          );
+                                        }}
+                                        className=""
+                                        min={0}
+                                        max={
+                                          discountType === "percentage"
+                                            ? 100
+                                            : editingConsultation.amount
+                                        }
+                                      />
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                  <label>Status</label>
-                                  <Select
-                                    value={editingConsultation?.status}
-                                    onValueChange={(value) =>
-                                      handleConsultationInputChange(
-                                        "status",
-                                        value
-                                      )
-                                    }
-                                    disabled={
-                                      editingConsultation.status === "completed"
-                                    }
-                                  >
-                                    <SelectTrigger className="col-span-3">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="pending">
-                                        Pending
-                                      </SelectItem>
-                                      <SelectItem value="confirmed">
-                                        Confirmed
-                                      </SelectItem>
-                                      <SelectItem value="completed">
-                                        Completed
-                                      </SelectItem>
-                                      <SelectItem value="cancelled">
-                                        Cancelled
-                                      </SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                  <label>Payment Status</label>
-                                  <Select
-                                    value={editingConsultation?.paymentStatus}
-                                    onValueChange={(value) =>
-                                      handleConsultationInputChange(
-                                        "paymentStatus",
-                                        value
-                                      )
-                                    }
-                                    disabled={
-                                      editingConsultation.status === "completed"
-                                    }
-                                  >
-                                    <SelectTrigger className="col-span-3">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="pending">
-                                        Pending
-                                      </SelectItem>
-                                      <SelectItem value="completed">
-                                        Completed
-                                      </SelectItem>
-                                      <SelectItem value="refunded">
-                                        Refunded
-                                      </SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                  <label>Consultation Type</label>
-                                  <Select
-                                    value={
-                                      editingConsultation?.consultationType
-                                    }
-                                    onValueChange={(value) =>
-                                      handleConsultationInputChange(
-                                        "consultationType",
-                                        value
-                                      )
-                                    }
-                                    disabled={
-                                      editingConsultation.status === "completed"
-                                    }
-                                  >
-                                    <SelectTrigger className="col-span-3">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="General Consultation">
-                                        General Consultation
-                                      </SelectItem>
-                                      <SelectItem value="Follow-up">
-                                        Follow-up
-                                      </SelectItem>
-                                      <SelectItem value="Specific Treatment">
-                                        Specific Treatment
-                                      </SelectItem>
-                                      <SelectItem value="Emergency">
-                                        Emergency
-                                      </SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </div>
+                              )}
+                              {/* </div> */}
                             </div>
-
                             {/* Medical Information */}
                             <div className="space-y-4 mt-4">
                               <div className="grid grid-cols-4 items-center gap-4">
@@ -576,6 +798,79 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
                                   />
                                 </div>
                               </div>
+                            </div>
+
+                            {/* Additional Information */}
+                            <div className="space-y-4 mt-4">
+                              <h3 className="text-lg font-semibold">
+                                Additional Information
+                              </h3>
+
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <label>Created At</label>
+                                <Input
+                                  className="col-span-3"
+                                  value={new Date(
+                                    editingConsultation?.createdAt || ""
+                                  ).toLocaleString()}
+                                  disabled
+                                />
+                              </div>
+
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <label>Last Updated</label>
+                                <Input
+                                  className="col-span-3"
+                                  value={new Date(
+                                    editingConsultation?.updatedAt || ""
+                                  ).toLocaleString()}
+                                  disabled
+                                />
+                              </div>
+
+                              {editingConsultation?.additionalInfo && (
+                                <>
+                                  <div className="grid grid-cols-4 items-center gap-4">
+                                    <label>Additional Files</label>
+                                    <div className="col-span-3">
+                                      {editingConsultation.additionalInfo.img?.map(
+                                        (imgUrl, index) => (
+                                          <div
+                                            key={`img-${index}`}
+                                            className="mb-2"
+                                          >
+                                            <a
+                                              href={imgUrl}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-blue-600 hover:underline"
+                                            >
+                                              View Image {index + 1}
+                                            </a>
+                                          </div>
+                                        )
+                                      )}
+                                      {editingConsultation.additionalInfo.file?.map(
+                                        (fileUrl, index) => (
+                                          <div
+                                            key={`file-${index}`}
+                                            className="mb-2"
+                                          >
+                                            <a
+                                              href={fileUrl}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-blue-600 hover:underline"
+                                            >
+                                              View File {index + 1}
+                                            </a>
+                                          </div>
+                                        )
+                                      )}
+                                    </div>
+                                  </div>
+                                </>
+                              )}
                             </div>
 
                             {consultation.status === "completed" && (
