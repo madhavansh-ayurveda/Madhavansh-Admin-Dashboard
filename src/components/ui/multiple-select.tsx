@@ -2,12 +2,15 @@ import React, { useState, useRef, useEffect } from "react";
 import { ChevronDown, X } from "lucide-react";
 import { Button } from "./button";
 import { Input } from "./input";
+import { cn } from "@/lib/utils";
 
 interface MultiSelectProps {
   options?: string[];
   placeholder?: string;
   onChange?: (selectedValues: string[]) => void;
   value?: string[];
+  className?: string;
+  searchFallback?: () => {};
 }
 
 const MultiSelect: React.FC<MultiSelectProps> = ({
@@ -15,13 +18,15 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
   placeholder = "Select options",
   onChange,
   value,
+  className = "",
+  searchFallback,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState<string[]>(value || []);
   const [searchTerm, setSearchTerm] = useState("");
   const selectRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
+  const [filteredOptions, setFilterOptions] = useState(options);
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -65,17 +70,21 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
     onChange?.(newSelectedOptions);
   };
 
-  const filteredOptions = options.filter((option) =>
-    option.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    setFilterOptions(
+      options.filter((option) =>
+        option.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    );
+  }, [searchTerm]);
 
   return (
-    <div ref={selectRef} className="relative min-w-64 z-10">
+    <div ref={selectRef} className={cn("relative min-w-64 z-10", className)}>
       <div
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-between p-2 border rounded cursor-pointer"
       >
-        <div className="flex flex-wrap gap-1 max-h-[50px] max-w-[90%] overflow-y-auto scrollbar-hide">
+        <div className="flex flex-wrap gap-1 max-h-[35px] max-w-[90%] overflow-y-auto scrollbar-hide">
           {selectedOptions.length === 0 ? (
             <span className="text-gray-500">{placeholder}</span>
           ) : (
@@ -101,7 +110,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
       </div>
       {isOpen && (
         <div className="absolute w-[70%] mt-1 border rounded shadow-lg max-h-60 bg-white min-w-[300px] overflow-hidden">
-          <div className="sticky flex justify-between items-center gap-2 top-0 bg-white z-10 border-b">
+          <div className="sticky flex justify-between items-center gap-2 top-0 bg-white z-10 border-b backdrop-blur-0">
             <Input
               type="text"
               placeholder="Search..."

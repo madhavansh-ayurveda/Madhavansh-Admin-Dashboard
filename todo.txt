@@ -3,3 +3,4 @@ Also an update of users information button.
 
 Handle the pescriptions upload in the admin-server link
 
+Creating the searchapi to fetch the medicine on the basis of the department or searchterm on adminclient side

@@ -2,6 +2,7 @@ import { AdminApi } from "@/api/axios";
 import { useState, useEffect } from "react";
 // import { API } from "aws-amplify";
 import { Medicine } from "@/types";
+import MultiSelect from "../ui/multiple-select";
 
 const MedicinePrescription = ({}: //   consultationId,
 {
@@ -11,16 +12,17 @@ const MedicinePrescription = ({}: //   consultationId,
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   //   const [prescription, setPrescription] = useState([]);
-  const [departments, setDepartments] = useState([]);
+  const [departments, setDepartments] = useState<string[]>([]);
 
   useEffect(() => {
-    const fetchDepartments = async () => {
-      //   const data = await AdminApi.get("/medicines/departments");
-      //   setDepartments(data);
-    };
-    fetchDepartments();
-  }, []);
-  setDepartments;
+    // const fetchDepartments = async () => {
+    //   //   const data = await AdminApi.get("/medicines/departments");
+    //   //   setDepartments(data);
+    // };
+    // fetchDepartments();
+    console.log(departments);
+  }, [departments]);
+
   useEffect(() => {
     const fetchMedicines = async () => {
       const params = {
@@ -88,8 +90,8 @@ const MedicinePrescription = ({}: //   consultationId,
 
   return (
     <div className="prescription-container">
-      <div className="filters">
-        <select
+      <div className="filters flex gap-4">
+        {/* <select
           value={selectedDepartment}
           onChange={(e) => setSelectedDepartment(e.target.value)}
         >
@@ -99,13 +101,23 @@ const MedicinePrescription = ({}: //   consultationId,
               {dept}
             </option>
           ))}
-        </select>
-        <input
-          type="text"
-          placeholder="Search medicines..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+        </select> */}
+        <MultiSelect
+          options={[
+            "Skin & Hair",
+            "Infertility and PCOD",
+            "Kidney and Gallbladder Stone",
+            "Arthritis and Pain Management",
+            "Life style disorder",
+            "Glaucoma",
+            "Immunity booster dose",
+          ]}
+          onChange={(e: string[]) => {
+            setDepartments(e);
+          }}
+          placeholder="Select Department"
         />
+        <MultiSelect options={[]} placeholder="Select Medicine"/>
       </div>
 
       <div className="medicine-list">
