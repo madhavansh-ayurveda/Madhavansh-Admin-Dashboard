@@ -10,7 +10,7 @@ interface MultiSelectProps {
   onChange?: (selectedValues: string[]) => void;
   value?: string[];
   className?: string;
-  searchFallback?: () => {};
+  searchFallback?: (searchTerm: string) => Promise<string[]>;
 }
 
 const MultiSelect: React.FC<MultiSelectProps> = ({
@@ -21,12 +21,34 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
   className = "",
   searchFallback,
 }) => {
+  // const [optionsList, setIsOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState<string[]>(value || []);
   const [searchTerm, setSearchTerm] = useState("");
   const selectRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [filteredOptions, setFilterOptions] = useState(options);
+
+  useEffect(() => {
+    setFilterOptions(options);
+  }, [options]);
+
+  useEffect(() => {
+    const updateOptions = async () => {
+      const filtered = options.filter(option =>
+        option.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilterOptions(filtered);
+      
+      if (filtered.length === 0 && searchFallback) {
+        const fallbackOptions = await searchFallback(searchTerm);
+        setFilterOptions(fallbackOptions);
+      }
+    };
+
+    updateOptions();
+  }, [searchTerm, options, searchFallback]);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -69,14 +91,6 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
     setSelectedOptions(newSelectedOptions);
     onChange?.(newSelectedOptions);
   };
-
-  useEffect(() => {
-    setFilterOptions(
-      options.filter((option) =>
-        option.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    );
-  }, [searchTerm]);
 
   return (
     <div ref={selectRef} className={cn("relative min-w-64 z-10", className)}>

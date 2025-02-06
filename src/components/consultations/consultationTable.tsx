@@ -65,6 +65,7 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
       days: 1,
     });
   const [showDiscountInput, setShowDiscountInput] = useState(false);
+  const [selectedMedicines, setSelectedMedicines] = useState<string[]>([]);
   const [discountValue, setDiscountValue] = useState<number | undefined>();
   const [discountAmount, setDiscountAmount] = useState<number | undefined>(0);
   const [discountType, setDiscountType] = useState<
@@ -819,18 +820,9 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
                                 {/* Medicine */}
                                 <div className="grid grid-cols-4 items-center gap-4">
                                   <label htmlFor="">Medicine</label>
-                                  {/* <MultiSelect
-                                    options={[
-                                      "Skin & Hair",
-                                      "Infertility and PCOD",
-                                      "Kidney and Gallbladder Stone",
-                                      "Arthritis and Pain Management",
-                                      "Life style disorder",
-                                      "Glaucoma",
-                                      "Immunity booster dose",
-                                    ]}
-                                  /> */}
-                                  <MedicinePrescription consultationId={consultation._id}/>
+                                  <MedicinePrescription
+                                    onselect={setSelectedMedicines}
+                                  />
                                 </div>
                               </div>
                             </div>

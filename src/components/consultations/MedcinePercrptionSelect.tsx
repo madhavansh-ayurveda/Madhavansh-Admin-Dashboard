@@ -4,38 +4,41 @@ import { useState, useEffect } from "react";
 import { Medicine } from "@/types";
 import MultiSelect from "../ui/multiple-select";
 
-const MedicinePrescription = ({}: //   consultationId,
-{
-  consultationId: string;
+const MedicinePrescription = ({
+  onselect,
+}: {
+  onselect: (medicines: string[]) => void;
 }) => {
   const [medicines, setMedicines] = useState<Medicine[]>([]);
-  const [selectedDepartment, setSelectedDepartment] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
+  // const [selectedMedicines, setSelectedMedicines] = useState<string[]>([]);
   //   const [prescription, setPrescription] = useState([]);
   const [departments, setDepartments] = useState<string[]>([]);
 
   useEffect(() => {
-    // const fetchDepartments = async () => {
-    //   //   const data = await AdminApi.get("/medicines/departments");
-    //   //   setDepartments(data);
-    // };
-    // fetchDepartments();
-    console.log(departments);
-  }, [departments]);
-
-  useEffect(() => {
     const fetchMedicines = async () => {
-      const params = {
-        queryStringParameters: {
-          department: selectedDepartment,
-          search: searchTerm,
-        },
-      };
-      const data: Medicine[] = await AdminApi.get(`/medicines/${params}`);
-      setMedicines(data);
+      try {
+        const { data } = await AdminApi.post<{ data: Medicine[] }>(
+          `/medicines-stock/departments/`,
+          { departments }
+        );
+        setMedicines(data?.data || []);
+      } catch (error) {
+        console.error("Error fetching medicines:", error);
+        setMedicines([]);
+      }
     };
     fetchMedicines();
-  }, [selectedDepartment, searchTerm]);
+  }, [departments]);
+
+  const handleMedicinSearch = async (searchTerm: string) => {
+    const data = await AdminApi.post(
+      `/medicines-stock/departments/${searchTerm || ""}`,
+      { departments }
+    );
+    console.log(data);
+
+    return data.data.map((medicine: Medicine) => medicine.name);
+  };
 
   //   const addToPrescription = (medicine: any) => {
   //     setPrescription([
@@ -91,17 +94,6 @@ const MedicinePrescription = ({}: //   consultationId,
   return (
     <div className="prescription-container">
       <div className="filters flex gap-4">
-        {/* <select
-          value={selectedDepartment}
-          onChange={(e) => setSelectedDepartment(e.target.value)}
-        >
-          <option value="">All Departments</option>
-          {departments.map((dept) => (
-            <option key={dept} value={dept}>
-              {dept}
-            </option>
-          ))}
-        </select> */}
         <MultiSelect
           options={[
             "Skin & Hair",
@@ -117,11 +109,17 @@ const MedicinePrescription = ({}: //   consultationId,
           }}
           placeholder="Select Department"
         />
-        <MultiSelect options={[]} placeholder="Select Medicine"/>
+        <MultiSelect
+          options={medicines?.map((e) => e.name) || []}
+          onChange={onselect}
+          // onChange={setSelectedMedicines}
+          searchFallback={handleMedicinSearch}
+          placeholder="Select Medicine"
+        />
       </div>
 
-      <div className="medicine-list">
-        {medicines.map((medicine) => (
+      {/* <div className="medicine-list">
+        {medicines?.map((medicine) => (
           <div key={medicine.name} className="medicine-item">
             <h4>{medicine.name}</h4>
             <p>
@@ -135,7 +133,7 @@ const MedicinePrescription = ({}: //   consultationId,
             </button>
           </div>
         ))}
-      </div>
+      </div> */}
 
       {/* {prescription.length > 0 && (
         <div className="prescription-review">
