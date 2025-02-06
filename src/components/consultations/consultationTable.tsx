@@ -85,6 +85,7 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
       setDiscountValue(editingConsultation.discount.value);
     }
   }, [editingConsultation]);
+  selectedMedicines
 
   const getStatusColor = (status: string) => {
     switch (status) {
