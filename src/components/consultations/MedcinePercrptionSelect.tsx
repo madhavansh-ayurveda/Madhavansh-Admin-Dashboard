@@ -10,7 +10,7 @@ const MedicinePrescription = ({
   onselect: (medicines: string[]) => void;
 }) => {
   const [medicines, setMedicines] = useState<Medicine[]>([]);
-  // const [selectedMedicines, setSelectedMedicines] = useState<string[]>([]);
+  const [selectedMedicines, setSelectedMedicines] = useState<Medicine[]>([]);
   //   const [prescription, setPrescription] = useState([]);
   const [departments, setDepartments] = useState<string[]>([]);
 
@@ -31,65 +31,22 @@ const MedicinePrescription = ({
   }, [departments]);
 
   const handleMedicinSearch = async (searchTerm: string) => {
-    const data = await AdminApi.post(
+    const { data } = await AdminApi.post<{ data: Medicine[] }>(
       `/medicines-stock/departments/${searchTerm || ""}`,
       { departments }
     );
-    console.log(data);
-
-    return data.data.map((medicine: Medicine) => medicine.name);
+    return data?.data?.map((medicine: Medicine) => medicine.name) || [];
   };
 
-  //   const addToPrescription = (medicine: any) => {
-  //     setPrescription([
-  //       ...prescription,
-  //       {
-  //         medicineName: medicine.name,
-  //         dose: "",
-  //         instructions: "",
-  //         price: medicine.price,
-  //       },
-  //     ]);
-  //   };
+  const handleSelect = (selectedNames: string[]) => {
+    const selected = medicines.filter(med => selectedNames.includes(med.name));
+    setSelectedMedicines(selected);
+    onselect(selectedNames);
+    console.log(selectedNames, selected);
+    
+  };
 
-  //   const updatePrescription = (index, field, value) => {
-  //     const updated = [...prescription];
-  //     updated[index][field] = value;
-  //     setPrescription(updated);
-  //   };
-
-  //   const calculateTotalCost = () => {
-  //     return prescription.reduce((total, item) => total + item.price, 0);
-  //   };
-
-  //   const submitPrescription = async () => {
-  //     try {
-  //       await API.put("api", `/consultations/${consultationId}`, {
-  //         body: {
-  //           prescription: {
-  //             medicine: {
-  //               list: prescription,
-  //               totalCost: calculateTotalCost(),
-  //             },
-  //             instructions: "",
-  //             endDate: new Date().toISOString(),
-  //           },
-  //         },
-  //       });
-
-  //       // Update stock (using quantity from dose if needed)
-  //       await API.post("api", "/medicines/update-stock", {
-  //         body: prescription.map((med) => ({
-  //           _id: med._id,
-  //           quantity: parseInt(med.dose.match(/\d+/)?.[0] || 1),
-  //         })),
-  //       });
-
-  //       alert("Prescription updated successfully!");
-  //     } catch (error) {
-  //       console.error("Error updating prescription:", error);
-  //     }
-  //   };
+  const totalCost = selectedMedicines.reduce((sum, med) => sum + (med.price || 0), 0);
 
   return (
     <div className="prescription-container">
@@ -111,12 +68,17 @@ const MedicinePrescription = ({
         />
         <MultiSelect
           options={medicines?.map((e) => e.name) || []}
-          onChange={onselect}
-          // onChange={setSelectedMedicines}
+          onChange={handleSelect}
           searchFallback={handleMedicinSearch}
           placeholder="Select Medicine"
         />
       </div>
+      
+      {selectedMedicines.length > 0 && (
+        <div className="mt-4 text-md">
+          Total Cost: ₹{totalCost}
+        </div>
+      )}
 
       {/* <div className="medicine-list">
         {medicines?.map((medicine) => (
