@@ -36,3 +36,9 @@ AdminApi.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+// Create a separate instance for file uploads
+export const uploadApi = axios.create({
+  baseURL: import.meta.env.VITE_SERVER_API_URL || "http://localhost:5000/api/admin",
+  withCredentials: true,
+});

@@ -24,14 +24,15 @@ export default function Login() {
 
       if (response.success && response.user) {
         dispatch(setCredentials({ user: response.user, token: response.token }));
-        localStorage.setItem("adminToken", response.token);
-        Cookies.set("adminToken", response.token, {
-          expires: 7,
-        });
+        // localStorage.setItem("adminToken", response.token);
+        // Cookies.set("adminToken", response.token, {
+        //   expires: 7,
+        // });
         toast.success("Login successful");
+        console.log(response);
+        localStorage.setItem("permissions", JSON.stringify(response.user.permissions));
+        
         navigate("/", { replace: true });
-      } else {
-        throw new Error(response.message || "Invalid response from server");
       }
     } catch (error: any) {
       console.error("Login error:", error);

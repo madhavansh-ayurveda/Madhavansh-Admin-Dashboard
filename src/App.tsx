@@ -8,6 +8,11 @@ import Doctors from './pages/Doctors'
 import Consultations from './pages/Consultations'
 import ProtectedRoute from './components/ProtectedRoute'
 import MedicineStock from './pages/MedicineStock'
+import BlogList from './pages/Blog/BlogList'
+import CreateBlogPost from './pages/Blog/CreateBlogPost'
+import EditBlogPost from './pages/Blog/EditBlogPost'
+import AdminManagement from './pages/AdminMangement'
+import InvoicePreview from './pages/Invoice'
 
 function App() {
     return (
@@ -24,7 +29,12 @@ function App() {
                     <Route path="/users" element={<Users />} />
                     <Route path="/doctors" element={<Doctors />} />
                     <Route path="/consultations" element={<Consultations />} />
+                    <Route path="/admins" element={<AdminManagement />} />
                     <Route path="/medicine-stock" element={<MedicineStock />} />
+                    <Route path="/blogs" element={<BlogList />} />
+                    <Route path="/blogs/create" element={<CreateBlogPost />} />
+                    <Route path="/blogs/edit/:id" element={<EditBlogPost />} />
+                    <Route path="/invoice" element={<InvoicePreview />} />
                 </Route>
             </Routes>
         </Router>

@@ -35,8 +35,13 @@ import {
 //   DropdownMenuTrigger,
 // } from "@/components/ui/dropdown-menu";
 // import { Filter } from "lucide-react";
-
+import Cookies from "js-cookie";
+import AccessDenied from "../components/AccessDenied";
 export default function Users() {
+  const permissions = JSON.parse(localStorage.getItem("permissions") || "[]");
+  if (!permissions?.includes("users") && Cookies.get("role") !== "super_admin") {
+    return <AccessDenied />;
+  }
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -67,7 +72,7 @@ export default function Users() {
 
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.key === '/') {
+      if (event.key === "/") {
         event.preventDefault();
         searchInputRef.current?.focus();
       } else if (event.key === "Escape") {
@@ -76,13 +81,12 @@ export default function Users() {
       }
     };
 
-    window.addEventListener('keydown', handleKeyPress);
+    window.addEventListener("keydown", handleKeyPress);
 
     return () => {
-      window.removeEventListener('keydown', handleKeyPress);
+      window.removeEventListener("keydown", handleKeyPress);
     };
   }, []);
-
 
   useEffect(() => {
     if (!shouldFetch) return;
@@ -129,10 +133,18 @@ export default function Users() {
     }, 300);
 
     return () => clearTimeout(debounceTimer);
-  }, [currentPage, searchTerm, filters, dispatch, cachedData, itemsPerPage, shouldFetch]);
+  }, [
+    currentPage,
+    searchTerm,
+    filters,
+    dispatch,
+    cachedData,
+    itemsPerPage,
+    shouldFetch,
+  ]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       setSearchTerm(isSearch);
     }
   };
@@ -163,7 +175,7 @@ export default function Users() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen" onKeyDown={handleKeyDown}>
+    <div className="flex flex-col min-h-screen dark:text-white" onKeyDown={handleKeyDown}>
       <div className="flex-grow space-y-6 p-4">
         <h1 className="text-xl md:text-2xl font-semibold">Users Management</h1>
         <div className="flex gap-4 flex-wrap items-center">
@@ -172,11 +184,17 @@ export default function Users() {
             placeholder="Search by name, email or contact (Press Enter or click Search)"
             value={isSearch}
             ref={searchInputRef}
-            onChange={(e) => { setIsSearch(e.target.value); setShouldFetch(true) }}
+            onChange={(e) => {
+              setIsSearch(e.target.value);
+              setShouldFetch(true);
+            }}
             className="w-full md:w-1/2 lg:w-1/3"
           />
           <Button
-            onClick={() => { setSearchTerm(isSearch); setShouldFetch(true) }}
+            onClick={() => {
+              setSearchTerm(isSearch);
+              setShouldFetch(true);
+            }}
             className="text-sm md:text-base"
           >
             Search
@@ -202,7 +220,10 @@ export default function Users() {
                   type="number"
                   name="minAge"
                   value={filters.minAge}
-                  onChange={(e) => { handleFilterChange(e); setShouldFetch(true) }}
+                  onChange={(e) => {
+                    handleFilterChange(e);
+                    setShouldFetch(true);
+                  }}
                   placeholder="Min Age"
                 />
               </div>
@@ -214,7 +235,10 @@ export default function Users() {
                   type="number"
                   name="maxAge"
                   value={filters.maxAge}
-                  onChange={(e) => { handleFilterChange(e); setShouldFetch(true) }}
+                  onChange={(e) => {
+                    handleFilterChange(e);
+                    setShouldFetch(true);
+                  }}
                   placeholder="Max Age"
                 />
               </div>
@@ -226,7 +250,10 @@ export default function Users() {
                   type="date"
                   name="startDate"
                   value={filters.startDate}
-                  onChange={(e) => { handleFilterChange(e); setShouldFetch(true) }}
+                  onChange={(e) => {
+                    handleFilterChange(e);
+                    setShouldFetch(true);
+                  }}
                 />
               </div>
               <div>
@@ -237,7 +264,10 @@ export default function Users() {
                   type="date"
                   name="endDate"
                   value={filters.endDate}
-                  onChange={(e) => { handleFilterChange(e); setShouldFetch(true) }}
+                  onChange={(e) => {
+                    handleFilterChange(e);
+                    setShouldFetch(true);
+                  }}
                 />
               </div>
             </div>
@@ -361,7 +391,7 @@ export default function Users() {
                                   </label>
                                   <Button
                                     className="w-[150px]"
-                                    onClick={() => { }}
+                                    onClick={() => {}}
                                   >
                                     Update User
                                   </Button>
@@ -372,12 +402,12 @@ export default function Users() {
                         </Dialog>
                         <Trash2
                           className="text-red-500 hover:text-red-700 cursor-pointer"
-                        // onClick={() =>
-                        //   handleDeleteConsultation(
-                        //     consultation._id,
-                        //     consultation.contact
-                        //   )
-                        // }
+                          // onClick={() =>
+                          //   handleDeleteConsultation(
+                          //     consultation._id,
+                          //     consultation.contact
+                          //   )
+                          // }
                         />
                       </TableCell>
                     </TableRow>

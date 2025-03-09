@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Card } from "@/components/ui/card";
-import { Users, Stethoscope, Calendar, IndianRupee } from "lucide-react";
+import {
+  Users,
+  Stethoscope,
+  Calendar,
+  IndianRupee,
+  Sparkles,
+} from "lucide-react";
 import { adminApi } from "@/api/adminApi";
 import { DashboardStats, ConsultationStats } from "@/types";
 // import { setCredentials } from "@/store/authSlice";
@@ -14,6 +20,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import Loading from "@/components/Loader";
 
 export default function Dashboard() {
   const dispatch = useDispatch();
@@ -22,6 +29,10 @@ export default function Dashboard() {
   const [consultationStats, setConsultationStats] =
     useState<ConsultationStats | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    console.log("Check");
+  },[]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -45,7 +56,11 @@ export default function Dashboard() {
   }, [dispatch]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="fixed top-45% left-50% transform -translate-x-1/2 -translate-y-1/2">
+        <Loading />
+      </div>
+    );
   }
 
   const statCards = [
@@ -97,8 +112,14 @@ export default function Dashboard() {
     })) || [];
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold py-6">Dashboard Overview</h1>
+    <div className="space-y-6 py-3">
+      <h1 className="text-2xl font-semibold flex gap-2 items-center dark:text-white">
+        Dashboard
+        <div className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full flex items-center gap-1">
+          <Sparkles className="h-3 w-3" />
+          <span>Overview</span>
+        </div>
+      </h1>
       <p>User: {user?.name || "No user logged in"}</p>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat) => (

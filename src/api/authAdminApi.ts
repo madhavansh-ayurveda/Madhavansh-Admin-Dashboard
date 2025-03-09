@@ -1,8 +1,7 @@
-import Cookies from "js-cookie";
 import { store } from "@/store";
 import { logout } from "@/store/authSlice";
 import { AdminApi } from "./axios";
-
+import Cookies from "js-cookie";
 
 export const authAdminApi = {
   login: async (email: string, password: string) => {
@@ -34,8 +33,10 @@ export const authAdminApi = {
     try {
       const response = await AdminApi.post(`/auth/logout`);
       localStorage.removeItem("token");
-      localStorage.removeItem("adminToken");
-      Cookies.remove("adminToken");
+      Cookies.remove('token')
+      Cookies.remove('role')
+      // localStorage.removeItem("adminToken");
+      // Cookies.remove("adminToken");
       delete AdminApi.defaults.headers.common["Authorization"];
 
       // Dispatch logout action to clear Redux store
@@ -45,8 +46,8 @@ export const authAdminApi = {
     } catch (error) {
       // Even if the API call fails, we should still clear local state
       localStorage.removeItem("token");
-      localStorage.removeItem("adminToken");
-      Cookies.remove("adminToken");
+      // localStorage.removeItem("adminToken");
+      // Cookies.remove("adminToken");
       delete AdminApi.defaults.headers.common["Authorization"];
       store.dispatch(logout());
       throw error;

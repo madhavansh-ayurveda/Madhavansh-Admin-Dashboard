@@ -1,4 +1,9 @@
-import React, { useEffect, useState } from "react";
+"use client";
+
+import type React from "react";
+
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import {
   Table,
   TableBody,
@@ -13,6 +18,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,23 +31,67 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Send, Trash2 } from "lucide-react";
+import {
+  Send,
+  Trash2,
+  Eye,
+  Calendar,
+  Clock,
+  User,
+  Phone,
+  FileText,
+  Stethoscope,
+  CreditCard,
+  AlertCircle,
+  Save,
+  Download,
+  ExternalLink,
+  CheckCircle2,
+  XCircle,
+  ClockIcon,
+  MessageSquare,
+  MoreVertical,
+  User2Icon,
+  IndianRupee,
+} from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Consultation } from "@/pages/Consultations";
+import type { Consultation } from "@/pages/Consultations";
 import { useNavigate } from "react-router-dom";
-// import {
-//   // setCacheData,
-//   // selectCacheData,
-//   clearCacheByPrefix,
-//   // CACHE_DURATIONS,
-// } from "@/store/cacheSlice";
-// import { useDispatch } from "react-redux";
-// import { useSelector } from "react-redux";
 import { adminApi } from "@/api/adminApi";
 import { cn } from "@/lib/utils";
-// import MultiSelect from "../ui/multiple-select";
 import MedicinePrescription from "./MedcinePercrptionSelect";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+
+const MotionDialogContent = motion(DialogContent);
 
 interface FeedbackScheduleState {
   type: "immediate" | "scheduled";
@@ -53,10 +104,12 @@ interface ConsultationTableProps {
 }
 
 const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
-  const [consultationsArray, setConsultationsArray] =
-    useState<Consultation[]>(data);
+  const [consultations, setConsultations] = useState<Consultation[]>(data);
+  // const [isConsultationUpdated, setIsConsultationUpdated] = (useState = useState<Consultation[]>(data))
   const [isConsultationUpdated, setIsConsultationUpdated] =
     useState<boolean>(false);
+  // const [isConsultationEditing, setIsConsultationEditing] =
+  //   useState<boolean>(false);
   const [editingConsultation, setEditingConsultation] =
     useState<Consultation | null>(null);
   const [feedbackSchedule, setFeedbackSchedule] =
@@ -71,11 +124,18 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
   const [discountType, setDiscountType] = useState<
     "percentage" | "fixed" | undefined
   >("percentage");
-  // const dispatch = useDispatch();
+  const [activeTab, setActiveTab] = useState("details");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [consultationToDelete, setConsultationToDelete] =
+    useState<Consultation | null>(null);
+
   const navigate = useNavigate();
 
   useEffect(() => {
-    // console.log(consultationsArray);
+    setConsultations(data);
+  }, [data]);
+
+  useEffect(() => {
     if (editingConsultation?.discount) {
       setShowDiscountInput(true);
       setDiscountAmount(editingConsultation.discount.amount);
@@ -85,20 +145,47 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
       setDiscountValue(editingConsultation.discount.value);
     }
   }, [editingConsultation]);
-  selectedMedicines
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
       case "confirmed":
-        return "bg-blue-100 text-blue-800";
+        return "bg-blue-100 text-blue-800 border-blue-200";
       case "completed":
-        return "bg-green-100 text-green-800";
+        return "bg-green-100 text-green-800 border-green-200";
       case "cancelled":
-        return "bg-red-100 text-red-800";
+        return "bg-red-100 text-red-800 border-red-200";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 text-gray-800 border-gray-200";
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "pending":
+        return <ClockIcon className="h-3.5 w-3.5" />;
+      case "confirmed":
+        return <CheckCircle2 className="h-3.5 w-3.5" />;
+      case "completed":
+        return <CheckCircle2 className="h-3.5 w-3.5" />;
+      case "cancelled":
+        return <XCircle className="h-3.5 w-3.5" />;
+      default:
+        return <AlertCircle className="h-3.5 w-3.5" />;
+    }
+  };
+
+  const getPaymentStatusColor = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "completed":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "refunded":
+        return "bg-purple-100 text-purple-800 border-purple-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
@@ -115,12 +202,12 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
     }
   };
 
-  const handleUpdateConsultation = async () => {
+  const handleUpdateConsultation = async (index: number) => {
     if (!editingConsultation) return;
 
-    let editConsultationData = editingConsultation;
+    let updatedConsultation = editingConsultation;
     if (discountValue) {
-      editConsultationData = {
+      updatedConsultation = {
         ...editingConsultation,
         discount: {
           discountType: discountType,
@@ -131,21 +218,28 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
     }
 
     try {
-      // console.log(editConsultationData);
-
-      await adminApi.updateConsultation(
+      const response = await adminApi.updateConsultation(
         editingConsultation._id,
-        editConsultationData
+        updatedConsultation
       );
-      // dispatch(clearCacheByPrefix("consultationsArray_")); // Clear all consultation-related cache
 
-      // Reset states
-      setEditingConsultation(null);
-      setFeedbackSchedule({
-        type: "immediate",
-        days: 1,
-      });
-      setEditingConsultation(null);
+      if (response.success) {
+        // Update local state
+        const updatedConsultations = [...consultations];
+        updatedConsultations[index] = updatedConsultation;
+        setConsultations(updatedConsultations);
+
+        // Reset states
+        setEditingConsultation(null);
+        setIsConsultationUpdated(false);
+        setFeedbackSchedule({
+          type: "immediate",
+          days: 1,
+        });
+        setShowDiscountInput(false);
+        setDiscountValue(undefined);
+        setDiscountAmount(0);
+      }
     } catch (error) {
       console.error("Error updating consultation:", error);
     }
@@ -153,9 +247,7 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
 
   const handleSubmitFeedback = async (
     consultationId: string,
-    email: string
   ) => {
-    email;
     try {
       const payload = {
         daysAfter:
@@ -164,9 +256,19 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
             : 0,
         immediate: feedbackSchedule.type === "immediate",
       };
+
       const response = await adminApi.sendFeedbackForm(consultationId, payload);
+
       if (response.success) {
-        console.log("Feedback form scheduled successfully");
+        // Update local state to reflect feedback status change
+        const updatedConsultations = consultations.map((consultation) =>
+          consultation._id === consultationId
+            ? { ...consultation, feedbackStatus: "sent" }
+            : consultation
+        );
+
+        setConsultations(updatedConsultations as Consultation[]);
+
         // Reset states
         setEditingConsultation(null);
         setFeedbackSchedule({
@@ -179,14 +281,31 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
     }
   };
 
-  const handleDeleteConsultation = async (id: string, contact: string) => {
-    const response = await adminApi.deleteConsultation(id, contact);
-    console.log(response);
+  const confirmDeleteConsultation = (consultation: Consultation) => {
+    setConsultationToDelete(consultation);
+    setDeleteDialogOpen(true);
+  };
 
-    if (response.success) {
-      setConsultationsArray((prevconsultationsArray) =>
-        prevconsultationsArray.filter((consultation) => consultation._id !== id)
+  const handleDeleteConsultation = async () => {
+    if (!consultationToDelete) return;
+
+    try {
+      const response = await adminApi.deleteConsultation(
+        consultationToDelete._id,
+        consultationToDelete.contact
       );
+
+      if (response.success) {
+        setConsultations((prevConsultations) =>
+          prevConsultations.filter(
+            (consultation) => consultation._id !== consultationToDelete._id
+          )
+        );
+        setDeleteDialogOpen(false);
+        setConsultationToDelete(null);
+      }
+    } catch (error) {
+      console.error("Error deleting consultation:", error);
     }
   };
 
@@ -194,6 +313,7 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
     if (editingConsultation && discount) {
       if (!isNaN(discount)) {
         let discountedAmount = editingConsultation.amount;
+
         if (discountType === "percentage") {
           discountedAmount =
             editingConsultation.amount -
@@ -201,498 +321,683 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
         } else {
           discountedAmount = editingConsultation.amount - discount;
         }
-        setDiscountAmount(discountedAmount);
-        // handleConsultationInputChange(
-        //   "amount",
-        //   Math.max(discountedAmount, 0)
-        // );
+
+        setDiscountAmount(Math.max(discountedAmount, 0));
       } else {
         setDiscountAmount(editingConsultation?.amount);
       }
     }
   };
 
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
   return (
     <>
-      <Table className="">
-        <TableHeader
-          className={cn(
-            "top-0 border-b shadow-md"
-            // isSidebarOpen ? "bg-gray-200" : "bg-gray-50"
-          )}
-        >
+      <Table className="border-collapse">
+        <TableHeader className="sticky top-0 bg-card z-10">
           <TableRow>
-            <TableHead className="min-w-[100px] border uppercase font-medium text-xs">
+            <TableHead className="w-[200px] font-medium text-xs uppercase">
+              <User2Icon className="h-3.5 w-3.5 text-muted-foreground inline mr-2" />
               Patient
             </TableHead>
-            <TableHead className="min-w-[100px] border uppercase font-medium text-xs">
+            <TableHead className="w-[150px] font-medium text-xs uppercase hidden md:table-cell">
+              <Phone className="h-3.5 w-3.5 text-muted-foreground inline mr-2" />
               Contact
             </TableHead>
-            <TableHead className="min-w-[100px] border uppercase font-medium text-xs">
+            <TableHead className="w-[150px] font-medium text-xs uppercase flex gap-3 justify-center items-center">
+              <Stethoscope className="h-3.5 w-3.5 text-muted-foreground" />
               Doctor
             </TableHead>
-            <TableHead className="hidden md:table-cell min-w-[100px] border uppercase font-medium text-xs">
+            <TableHead className="w-[120px] font-medium text-xs uppercase hidden lg:table-cell">
               Type
             </TableHead>
-            <TableHead className="hidden sm:table-cell min-w-[50px] border uppercase font-medium text-xs">
-              Date
+            <TableHead className="w-[120px] font-medium text-xs uppercase hidden sm:table-cell">
+              Date & Time
             </TableHead>
-            <TableHead className="hidden sm:table-cell min-w-[50px] border uppercase font-medium text-xs">
-              Time
-            </TableHead>
-            <TableHead className=" hidden sm:table-cell min-w-[60px] border uppercase font-medium text-xs">
+            <TableHead className="w-[100px] font-medium text-xs uppercase">
               Status
             </TableHead>
-            <TableHead className="min-w-[50px] border uppercase font-medium text-xs">
+            <TableHead className="w-[100px] font-medium text-xs uppercase flex justify-end items-center">
+              <IndianRupee className="h-3.5 w-3.5 text-muted-foreground" />
               Amount
             </TableHead>
-            <TableHead className="min-w-[100px] border uppercase font-medium text-xs">
+            <TableHead className="w-[100px] font-medium text-xs uppercase text-right">
               Actions
             </TableHead>
           </TableRow>
         </TableHeader>
 
         <TableBody>
-          {consultationsArray &&
-            consultationsArray.length > 0 &&
-            consultationsArray.map((consultation) => (
-              <TableRow
-                key={consultation._id}
-                className={`text-sm md:text-base hover:bg-gray-100`}
-              >
-                <TableCell className="whitespace-nowrap min-w-[100px] border-b">
-                  {consultation.name || "N/A"}
-                </TableCell>
-                <TableCell className="whitespace-nowrap min-w-[100px] border-b">
-                  {consultation.contact}
-                </TableCell>
-                <TableCell className="whitespace-nowrap min-w-[100px] border-b">
-                  Dr. {consultation.doctor.doctorName || "N/A"}
-                </TableCell>
-                <TableCell className="hidden md:table-cell min-w-[100px] border-b">
+          {consultations.map((consultation, index) => (
+            <TableRow
+              key={consultation._id}
+              className="group hover:bg-muted/50 transition-colors"
+            >
+              <TableCell className="font-medium">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-8 w-8 hidden sm:flex">
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                      {getInitials(consultation.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="font-medium">{consultation.name}</div>
+                    <div className="text-xs text-muted-foreground hidden sm:block">
+                      {consultation.email}
+                    </div>
+                  </div>
+                </div>
+              </TableCell>
+
+              <TableCell className="hidden md:table-cell">
+                <div className="flex items-center gap-2">
+                  <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span>{consultation.contact}</span>
+                </div>
+              </TableCell>
+
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <span>Dr. {consultation.doctor.doctorName}</span>
+                </div>
+              </TableCell>
+
+              <TableCell className="hidden lg:table-cell">
+                <Badge variant="outline" className="font-normal">
                   {consultation.consultationType}
-                </TableCell>
-                <TableCell className="hidden sm:table-cell min-w-[100px] border-b">
-                  {new Date(consultation.date).toLocaleDateString()}
-                </TableCell>
-                <TableCell className="hidden sm:table-cell min-w-[50px] border-b">
-                  {consultation.timeSlot}
-                </TableCell>
-                <TableCell className="hidden sm:table-cell min-w-[50px] border-b">
-                  <span
-                    className={`p-2 px-4 text-xs font-semibold rounded-full ${getStatusColor(
-                      consultation.status
-                    )}`}
+                </Badge>
+              </TableCell>
+
+              <TableCell className="hidden sm:table-cell">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <Calendar className="h-3 w-3 text-muted-foreground" />
+                    <span>{formatDate(consultation.date)}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <Clock className="h-3 w-3 text-muted-foreground" />
+                    <span>{consultation.timeSlot}</span>
+                  </div>
+                </div>
+              </TableCell>
+
+              <TableCell>
+                <div className="flex flex-col gap-1">
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "flex w-fit items-center gap-1 py-0.5 px-1.5 text-xs capitalize",
+                      getStatusColor(consultation.status)
+                    )}
                   >
-                    {consultation.status}
-                  </span>
-                </TableCell>
-                <TableCell>₹{consultation.amount}</TableCell>
-                <TableCell className="flex flex-col min-w-[100px] border-b sm:flex-row gap-2 md:gap-5 lg:gap-4 items-start sm:items-center p-0 py-4 px-2">
-                  <div className="flex flex-col gap-3">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setEditingConsultation(consultation);
-                            // setOriginalAmount(consultation.amount);
-                          }}
+                    {getStatusIcon(consultation.status)}
+                    <span>{consultation.status}</span>
+                  </Badge>
+
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "flex w-fit items-center gap-1 py-0.5 px-1.5 text-xs capitalize",
+                      getPaymentStatusColor(consultation.paymentStatus)
+                    )}
+                  >
+                    <CreditCard className="h-3 w-3" />
+                    <span>{consultation.paymentStatus}</span>
+                  </Badge>
+                </div>
+              </TableCell>
+
+              <TableCell>
+                <div className="font-medium">₹{consultation.amount}</div>
+                {consultation.discount && (
+                  <div className="text-xs text-muted-foreground line-through">
+                    {consultation.amount + (consultation.discount.amount || 0)}
+                  </div>
+                )}
+              </TableCell>
+
+              <TableCell className="text-right">
+                <div className="flex items-center justify-end gap-2">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-1"
+                        onClick={() => setEditingConsultation(consultation)}
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">View</span>
+                      </Button>
+                    </DialogTrigger>
+
+                    {editingConsultation && (
+                      <MotionDialogContent
+                        className="max-w-7xl max-h-[90vh] overflow-y-auto"
+                        // initial={{ opacity: 0, y: 20 }}
+                        // animate={{ opacity: 1, y: 0 }}
+                        // transition={{ duration: 0.2 }}
+                      >
+                        <DialogHeader>
+                          <DialogTitle className="flex items-center gap-2 text-xl">
+                            <FileText className="h-5 w-5" />
+                            Consultation Details
+                          </DialogTitle>
+                        </DialogHeader>
+
+                        <Tabs
+                          defaultValue="details"
+                          value={activeTab}
+                          onValueChange={setActiveTab}
+                          className="mt-4"
                         >
-                          View More
-                        </Button>
-                      </DialogTrigger>
-                      {editingConsultation && (
-                        <DialogContent className="max-w-[90vw] md:max-w-4xl max-h-[90vh] overflow-y-auto p-4 md:p-6">
-                          <DialogHeader>
-                            <DialogTitle className="text-lg md:text-xl">
-                              Consultation Details
-                            </DialogTitle>
-                          </DialogHeader>
-                          <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
-                              {/* Basic Information */}
-                              {/* <div className="space-y-4"> */}
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <label>Patient Name</label>
-                                <Input
-                                  className="col-span-3"
-                                  value={editingConsultation?.name || ""}
-                                  disabled
-                                />
-                              </div>
+                          <TabsList className="grid grid-cols-3 mb-4">
+                            <TabsTrigger value="details">
+                              <User className="h-4 w-4 mr-2" />
+                              Details
+                            </TabsTrigger>
+                            <TabsTrigger value="prescription">
+                              <FileText className="h-4 w-4 mr-2" />
+                              Prescription
+                            </TabsTrigger>
+                            <TabsTrigger value="feedback">
+                              <MessageSquare className="h-4 w-4 mr-2" />
+                              Feedback
+                            </TabsTrigger>
+                          </TabsList>
 
-                              {/* Doctor */}
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <label>Doctor</label>
-                                <Input
-                                  className="col-span-3"
-                                  value={`Dr. ${
-                                    editingConsultation?.doctor?.doctorName ||
-                                    "N/A"
-                                  }`}
-                                  disabled
-                                />
-                              </div>
-
-                              {/* Email */}
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <label>Email</label>
-                                <Input
-                                  className="col-span-3"
-                                  value={editingConsultation?.email || ""}
-                                  onChange={(e) =>
-                                    handleConsultationInputChange(
-                                      "email",
-                                      e.target.value
-                                    )
-                                  }
-                                  disabled
-                                />
-                              </div>
-
-                              {/* Date */}
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <label>Date</label>
-                                <Input
-                                  type="date"
-                                  className="col-span-3"
-                                  value={
-                                    editingConsultation?.date.split("T")[0] ||
-                                    ""
-                                  }
-                                  onChange={(e) =>
-                                    handleConsultationInputChange(
-                                      "date",
-                                      e.target.value
-                                    )
-                                  }
-                                  disabled={
-                                    editingConsultation.status === "completed"
-                                  }
-                                />
-                              </div>
-
-                              {/* Contact */}
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <label>Contact</label>
-                                <Input
-                                  className="col-span-3"
-                                  value={editingConsultation?.contact || ""}
-                                  onChange={(e) =>
-                                    handleConsultationInputChange(
-                                      "contact",
-                                      e.target.value
-                                    )
-                                  }
-                                  disabled={
-                                    editingConsultation.status === "completed"
-                                  }
-                                />
-                              </div>
-
-                              {/* Department */}
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <label>Department</label>
-                                <Input
-                                  className="col-span-3"
-                                  value={editingConsultation?.department || ""}
-                                  onChange={(e) =>
-                                    handleConsultationInputChange(
-                                      "department",
-                                      e.target.value
-                                    )
-                                  }
-                                  disabled
-                                  // disabled={
-                                  //   editingConsultation.status === "completed"
-                                  // }
-                                />
-                              </div>
-
-                              {/* Mode */}
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <label>Mode</label>
-                                <Select
-                                  value={editingConsultation?.mode || ""}
-                                  onValueChange={(e) =>
-                                    handleConsultationInputChange("mode", e)
-                                  }
-                                  disabled={
-                                    editingConsultation.status === "completed"
-                                  }
-                                >
-                                  <SelectTrigger className="col-span-3">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="online">
-                                      Online
-                                    </SelectItem>
-                                    <SelectItem value="offline">
-                                      Offline
-                                    </SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-
-                              {/* Time Slot */}
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <label>Time Slot</label>
-                                <Input
-                                  className="col-span-3"
-                                  value={editingConsultation?.timeSlot || ""}
-                                  onChange={(e) =>
-                                    handleConsultationInputChange(
-                                      "timeSlot",
-                                      e.target.value
-                                    )
-                                  }
-                                  disabled={
-                                    editingConsultation.status === "completed"
-                                  }
-                                />
-                              </div>
-
-                              {/* Status */}
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <label>Status</label>
-                                <Select
-                                  value={editingConsultation?.status}
-                                  onValueChange={(value) =>
-                                    handleConsultationInputChange(
-                                      "status",
-                                      value
-                                    )
-                                  }
-                                  disabled={
-                                    editingConsultation.status === "completed"
-                                  }
-                                >
-                                  <SelectTrigger className="col-span-3">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="pending">
-                                      Pending
-                                    </SelectItem>
-                                    <SelectItem value="confirmed">
-                                      Confirmed
-                                    </SelectItem>
-                                    <SelectItem value="completed">
-                                      Completed
-                                    </SelectItem>
-                                    <SelectItem value="cancelled">
-                                      Cancelled
-                                    </SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-
-                              {/* Payment Status */}
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <label>Payment Status</label>
-                                <Select
-                                  value={editingConsultation?.paymentStatus}
-                                  onValueChange={(value) =>
-                                    handleConsultationInputChange(
-                                      "paymentStatus",
-                                      value
-                                    )
-                                  }
-                                  disabled={
-                                    editingConsultation.status === "completed"
-                                  }
-                                >
-                                  <SelectTrigger className="col-span-3">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="pending">
-                                      Pending
-                                    </SelectItem>
-                                    <SelectItem value="completed">
-                                      Completed
-                                    </SelectItem>
-                                    <SelectItem value="refunded">
-                                      Refunded
-                                    </SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-
-                              {/* Type */}
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <label>Consultation Type</label>
-                                <Select
-                                  value={editingConsultation?.consultationType}
-                                  onValueChange={(value) =>
-                                    handleConsultationInputChange(
-                                      "consultationType",
-                                      value
-                                    )
-                                  }
-                                  disabled={
-                                    editingConsultation.status === "completed"
-                                  }
-                                >
-                                  <SelectTrigger className="col-span-3">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="General Consultation">
-                                      General Consultation
-                                    </SelectItem>
-                                    <SelectItem value="Follow-up">
-                                      Follow-up
-                                    </SelectItem>
-                                    <SelectItem value="Specific Treatment">
-                                      Specific Treatment
-                                    </SelectItem>
-                                    <SelectItem value="Emergency">
-                                      Emergency
-                                    </SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-
-                              {/* Amount */}
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <label>Original Amount (₹)</label>
-                                <div className="col-span-3 space-y-2">
-                                  <div className="flex gap-2">
+                          <TabsContent value="details" className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <Card>
+                                <CardHeader className="pb-3">
+                                  <CardTitle className="text-base font-medium flex items-center gap-2">
+                                    <User className="h-4 w-4 text-muted-foreground" />
+                                    Patient Information
+                                  </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                  <div className="grid grid-cols-3 items-center gap-4">
+                                    <Label className="text-muted-foreground">
+                                      Name
+                                    </Label>
                                     <Input
-                                      type="number"
-                                      value={editingConsultation?.amount}
+                                      className="col-span-2"
+                                      value={editingConsultation?.name || ""}
+                                      onChange={(e) =>
+                                        handleConsultationInputChange(
+                                          "name",
+                                          e.target.value
+                                        )
+                                      }
+                                      disabled={
+                                        editingConsultation.status ===
+                                        "completed"
+                                      }
+                                    />
+                                  </div>
+
+                                  <div className="grid grid-cols-3 items-center gap-4">
+                                    <Label className="text-muted-foreground">
+                                      Email
+                                    </Label>
+                                    <Input
+                                      className="col-span-2"
+                                      value={editingConsultation?.email || ""}
+                                      onChange={(e) =>
+                                        handleConsultationInputChange(
+                                          "email",
+                                          e.target.value
+                                        )
+                                      }
+                                      disabled={
+                                        editingConsultation.status ===
+                                        "completed"
+                                      }
+                                    />
+                                  </div>
+
+                                  <div className="grid grid-cols-3 items-center gap-4">
+                                    <Label className="text-muted-foreground">
+                                      Contact
+                                    </Label>
+                                    <Input
+                                      className="col-span-2"
+                                      value={editingConsultation?.contact || ""}
+                                      onChange={(e) =>
+                                        handleConsultationInputChange(
+                                          "contact",
+                                          e.target.value
+                                        )
+                                      }
+                                      disabled={
+                                        editingConsultation.status ===
+                                        "completed"
+                                      }
+                                    />
+                                  </div>
+
+                                  <div className="grid grid-cols-3 items-center gap-4">
+                                    <Label className="text-muted-foreground">
+                                      Symptoms
+                                    </Label>
+                                    <Textarea
+                                      className="col-span-2 min-h-[80px]"
+                                      value={
+                                        editingConsultation?.symptoms || ""
+                                      }
+                                      onChange={(e) =>
+                                        handleConsultationInputChange(
+                                          "symptoms",
+                                          e.target.value
+                                        )
+                                      }
+                                      disabled={
+                                        editingConsultation.status ===
+                                        "completed"
+                                      }
+                                    />
+                                  </div>
+                                </CardContent>
+                              </Card>
+
+                              <Card>
+                                <CardHeader className="pb-3">
+                                  <CardTitle className="text-base font-medium flex items-center gap-2">
+                                    <Stethoscope className="h-4 w-4 text-muted-foreground" />
+                                    Appointment Details
+                                  </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                  <div className="grid grid-cols-3 items-center gap-4">
+                                    <Label className="text-muted-foreground">
+                                      Doctor
+                                    </Label>
+                                    <Input
+                                      className="col-span-2"
+                                      value={`Dr. ${
+                                        editingConsultation?.doctor
+                                          ?.doctorName || "N/A"
+                                      }`}
                                       disabled
                                     />
-                                    <Button
-                                      variant="outline"
-                                      onClick={() => {
-                                        setShowDiscountInput(
-                                          !showDiscountInput
-                                        );
-                                      }}
-                                      className="w-56"
-                                    >
-                                      {showDiscountInput
-                                        ? "Cancel Discount"
-                                        : "Apply Discount"}
-                                    </Button>
                                   </div>
-                                </div>
-                              </div>
 
-                              {/* Discounted Amount */}
-                              {showDiscountInput && (
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                  <label>Discounted Amount (₹)</label>
-                                  <div className="col-span-3 space-y-2">
+                                  <div className="grid grid-cols-3 items-center gap-4">
+                                    <Label className="text-muted-foreground">
+                                      Department
+                                    </Label>
                                     <Input
-                                      type="number"
+                                      className="col-span-2"
                                       value={
-                                        discountAmount ||
-                                        editingConsultation.amount
+                                        editingConsultation?.department || ""
                                       }
                                       disabled
                                     />
-                                    <div className="flex gap-2 items-center">
-                                      <Select
-                                        value={discountType}
-                                        onValueChange={(value) =>
-                                          setDiscountType(
-                                            value as "percentage" | "fixed"
-                                          )
-                                        }
-                                      >
-                                        <SelectTrigger className="w-24">
-                                          <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="percentage">
-                                            %
-                                          </SelectItem>
-                                          <SelectItem value="fixed">
-                                            ₹
-                                          </SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                      <Input
-                                        type="number"
-                                        placeholder={
-                                          discountType === "percentage"
-                                            ? "Discount %"
-                                            : "Discount amount"
-                                        }
-                                        value={discountValue}
-                                        onChange={(e) => {
-                                          setDiscountValue(
-                                            parseFloat(e.target.value)
-                                          );
-                                          applyDiscount(
-                                            parseFloat(e.target.value)
-                                          );
-                                        }}
-                                        className=""
-                                        min={0}
-                                        max={
-                                          discountType === "percentage"
-                                            ? 100
-                                            : editingConsultation.amount
-                                        }
-                                      />
+                                  </div>
+
+                                  <div className="grid grid-cols-3 items-center gap-4">
+                                    <Label className="text-muted-foreground">
+                                      Date
+                                    </Label>
+                                    <Input
+                                      type="date"
+                                      className="col-span-2"
+                                      value={
+                                        editingConsultation?.date.split(
+                                          "T"
+                                        )[0] || ""
+                                      }
+                                      onChange={(e) =>
+                                        handleConsultationInputChange(
+                                          "date",
+                                          e.target.value
+                                        )
+                                      }
+                                      disabled={
+                                        editingConsultation.status ===
+                                        "completed"
+                                      }
+                                    />
+                                  </div>
+
+                                  <div className="grid grid-cols-3 items-center gap-4">
+                                    <Label className="text-muted-foreground">
+                                      Time Slot
+                                    </Label>
+                                    <Input
+                                      className="col-span-2"
+                                      value={
+                                        editingConsultation?.timeSlot || ""
+                                      }
+                                      onChange={(e) =>
+                                        handleConsultationInputChange(
+                                          "timeSlot",
+                                          e.target.value
+                                        )
+                                      }
+                                      disabled={
+                                        editingConsultation.status ===
+                                        "completed"
+                                      }
+                                    />
+                                  </div>
+
+                                  <div className="grid grid-cols-3 items-center gap-4">
+                                    <Label className="text-muted-foreground">
+                                      Mode
+                                    </Label>
+                                    <Select
+                                      value={editingConsultation?.mode || ""}
+                                      onValueChange={(e) =>
+                                        handleConsultationInputChange("mode", e)
+                                      }
+                                      disabled={
+                                        editingConsultation.status ===
+                                        "completed"
+                                      }
+                                    >
+                                      <SelectTrigger className="col-span-2">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="online">
+                                          Online
+                                        </SelectItem>
+                                        <SelectItem value="offline">
+                                          Offline
+                                        </SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                </CardContent>
+                              </Card>
+
+                              <Card>
+                                <CardHeader className="pb-3">
+                                  <CardTitle className="text-base font-medium flex items-center gap-2">
+                                    <FileText className="h-4 w-4 text-muted-foreground" />
+                                    Consultation Details
+                                  </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                  <div className="grid grid-cols-3 items-center gap-4">
+                                    <Label className="text-muted-foreground">
+                                      Type
+                                    </Label>
+                                    <Select
+                                      value={
+                                        editingConsultation?.consultationType
+                                      }
+                                      onValueChange={(value) =>
+                                        handleConsultationInputChange(
+                                          "consultationType",
+                                          value
+                                        )
+                                      }
+                                      disabled={
+                                        editingConsultation.status ===
+                                        "completed"
+                                      }
+                                    >
+                                      <SelectTrigger className="col-span-2">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="General Consultation">
+                                          General Consultation
+                                        </SelectItem>
+                                        <SelectItem value="Follow-up">
+                                          Follow-up
+                                        </SelectItem>
+                                        <SelectItem value="Specific Treatment">
+                                          Specific Treatment
+                                        </SelectItem>
+                                        <SelectItem value="Emergency">
+                                          Emergency
+                                        </SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+
+                                  <div className="grid grid-cols-3 items-center gap-4">
+                                    <Label className="text-muted-foreground">
+                                      Status
+                                    </Label>
+                                    <Select
+                                      value={editingConsultation?.status}
+                                      onValueChange={(value) =>
+                                        handleConsultationInputChange(
+                                          "status",
+                                          value
+                                        )
+                                      }
+                                      disabled={
+                                        editingConsultation.status ===
+                                        "completed"
+                                      }
+                                    >
+                                      <SelectTrigger className="col-span-2">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="pending">
+                                          Pending
+                                        </SelectItem>
+                                        <SelectItem value="confirmed">
+                                          Confirmed
+                                        </SelectItem>
+                                        <SelectItem value="completed">
+                                          Completed
+                                        </SelectItem>
+                                        <SelectItem value="cancelled">
+                                          Cancelled
+                                        </SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+
+                                  <div className="grid grid-cols-3 items-center gap-4">
+                                    <Label className="text-muted-foreground">
+                                      Payment Status
+                                    </Label>
+                                    <Select
+                                      value={editingConsultation?.paymentStatus}
+                                      onValueChange={(value) =>
+                                        handleConsultationInputChange(
+                                          "paymentStatus",
+                                          value
+                                        )
+                                      }
+                                      disabled={
+                                        editingConsultation.status ===
+                                        "completed"
+                                      }
+                                    >
+                                      <SelectTrigger className="col-span-2">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="pending">
+                                          Pending
+                                        </SelectItem>
+                                        <SelectItem value="completed">
+                                          Completed
+                                        </SelectItem>
+                                        <SelectItem value="refunded">
+                                          Refunded
+                                        </SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+
+                                  <div className="grid grid-cols-3 items-center gap-4">
+                                    <Label className="text-muted-foreground">
+                                      Notes
+                                    </Label>
+                                    <Textarea
+                                      className="col-span-2 min-h-[80px]"
+                                      value={editingConsultation?.notes || ""}
+                                      onChange={(e) =>
+                                        handleConsultationInputChange(
+                                          "notes",
+                                          e.target.value
+                                        )
+                                      }
+                                      disabled={
+                                        editingConsultation.status ===
+                                        "completed"
+                                      }
+                                    />
+                                  </div>
+                                </CardContent>
+                              </Card>
+
+                              <Card>
+                                <CardHeader className="pb-3">
+                                  <CardTitle className="text-base font-medium flex items-center gap-2">
+                                    <CreditCard className="h-4 w-4 text-muted-foreground" />
+                                    Payment Details
+                                  </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                  <div className="grid grid-cols-3 items-center gap-4">
+                                    <Label className="text-muted-foreground">
+                                      Original Amount (₹)
+                                    </Label>
+                                    <div className="col-span-2 space-y-2">
+                                      <div className="flex gap-2">
+                                        <Input
+                                          type="number"
+                                          value={editingConsultation?.amount}
+                                          disabled
+                                        />
+                                        <Button
+                                          variant="outline"
+                                          onClick={() =>
+                                            setShowDiscountInput(
+                                              !showDiscountInput
+                                            )
+                                          }
+                                          className="whitespace-nowrap"
+                                          disabled={
+                                            editingConsultation.status ===
+                                            "completed"
+                                          }
+                                        >
+                                          {showDiscountInput
+                                            ? "Cancel Discount"
+                                            : "Apply Discount"}
+                                        </Button>
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              )}
-                              {/* </div> */}
-                            </div>
-                            {/* Medical Information */}
-                            <div className="space-y-4 mt-4">
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <label>Symptoms</label>
-                                <Textarea
-                                  className="col-span-3"
-                                  value={editingConsultation?.symptoms || ""}
-                                  onChange={(e) =>
-                                    handleConsultationInputChange(
-                                      "symptoms",
-                                      e.target.value
-                                    )
-                                  }
-                                  disabled={
-                                    editingConsultation.status === "completed"
-                                  }
-                                />
-                              </div>
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <label>Notes</label>
-                                <Textarea
-                                  className="col-span-3"
-                                  value={editingConsultation?.notes || ""}
-                                  onChange={(e) =>
-                                    handleConsultationInputChange(
-                                      "notes",
-                                      e.target.value
-                                    )
-                                  }
-                                  disabled={
-                                    editingConsultation.status === "completed"
-                                  }
-                                />
-                              </div>
-                            </div>
 
-                            {/* Prescription Section */}
-                            <div className="mt-4">
-                              <h3 className="text-lg font-semibold mb-2">
-                                Prescription
-                              </h3>
-                              <div className="space-y-4">
-                                {/* Pescription Upload */}
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                  <label>Upload Prescriptions</label>
-                                  <div className="col-span-3">
+                                  {showDiscountInput && (
+                                    <div className="grid grid-cols-3 items-center gap-4">
+                                      <Label className="text-muted-foreground">
+                                        Discounted Amount (₹)
+                                      </Label>
+                                      <div className="col-span-2 space-y-2">
+                                        <Input
+                                          type="number"
+                                          value={
+                                            discountAmount ||
+                                            editingConsultation.amount
+                                          }
+                                          disabled
+                                        />
+                                        <div className="flex gap-2 items-center">
+                                          <Select
+                                            value={discountType}
+                                            onValueChange={(value) =>
+                                              setDiscountType(
+                                                value as "percentage" | "fixed"
+                                              )
+                                            }
+                                          >
+                                            <SelectTrigger className="w-24">
+                                              <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              <SelectItem value="percentage">
+                                                %
+                                              </SelectItem>
+                                              <SelectItem value="fixed">
+                                                ₹
+                                              </SelectItem>
+                                            </SelectContent>
+                                          </Select>
+                                          <Input
+                                            type="number"
+                                            placeholder={
+                                              discountType === "percentage"
+                                                ? "Discount %"
+                                                : "Discount amount"
+                                            }
+                                            value={discountValue}
+                                            onChange={(e) => {
+                                              setDiscountValue(
+                                                Number.parseFloat(
+                                                  e.target.value
+                                                )
+                                              );
+                                              applyDiscount(
+                                                Number.parseFloat(
+                                                  e.target.value
+                                                )
+                                              );
+                                            }}
+                                            min={0}
+                                            max={
+                                              discountType === "percentage"
+                                                ? 100
+                                                : editingConsultation.amount
+                                            }
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </CardContent>
+                              </Card>
+                            </div>
+                          </TabsContent>
+
+                          <TabsContent
+                            value="prescription"
+                            className="space-y-6"
+                          >
+                            <Card>
+                              <CardHeader className="pb-3">
+                                <CardTitle className="text-base font-medium flex items-center gap-2">
+                                  <FileText className="h-4 w-4 text-muted-foreground" />
+                                  Prescription Files
+                                </CardTitle>
+                                <CardDescription>
+                                  Upload and manage prescription files for this
+                                  consultation
+                                </CardDescription>
+                              </CardHeader>
+                              <CardContent className="space-y-4">
+                                <div className="grid grid-cols-1 items-center gap-4">
+                                  <div className="flex flex-col gap-2">
+                                    <Label>Upload Prescriptions</Label>
                                     <Input
                                       type="file"
                                       accept=".pdf,.jpg,.jpeg,.png"
@@ -736,7 +1041,6 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
                                               "Error uploading prescriptions:",
                                               error
                                             );
-                                            // Add error handling here (e.g., show a toast message)
                                           }
                                         }
                                       }}
@@ -745,27 +1049,47 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
                                         "completed"
                                       }
                                     />
-                                    {editingConsultation?.prescription?.files &&
-                                      editingConsultation.prescription.files
-                                        .length > 0 && (
-                                        <div className="mt-2 space-y-2">
-                                          {editingConsultation.prescription.files.map(
-                                            (fileUrl, index) => (
-                                              <div
-                                                key={index}
-                                                className="flex items-center gap-2"
-                                              >
-                                                <a
-                                                  href={fileUrl}
-                                                  target="_blank"
-                                                  rel="noopener noreferrer"
-                                                  className="text-blue-600 hover:underline"
+                                  </div>
+
+                                  {editingConsultation?.prescription?.files &&
+                                  editingConsultation.prescription.files
+                                    .length > 0 ? (
+                                    <div className="mt-4 space-y-2">
+                                      <Label>Uploaded Prescriptions</Label>
+                                      <div className="grid grid-cols-1 gap-2 mt-2">
+                                        {editingConsultation.prescription.files.map(
+                                          (fileUrl, index) => (
+                                            <div
+                                              key={index}
+                                              className="flex items-center justify-between p-3 border rounded-md"
+                                            >
+                                              <div className="flex items-center gap-2">
+                                                <FileText className="h-4 w-4 text-muted-foreground" />
+                                                <span className="text-sm">
+                                                  Prescription {index + 1}
+                                                </span>
+                                              </div>
+                                              <div className="flex items-center gap-2">
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  className="h-8"
+                                                  asChild
                                                 >
-                                                  View Prescription {index + 1}
-                                                </a>
+                                                  <a
+                                                    href={fileUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center gap-1"
+                                                  >
+                                                    <ExternalLink className="h-3.5 w-3.5" />
+                                                    <span>View</span>
+                                                  </a>
+                                                </Button>
                                                 <Button
                                                   variant="destructive"
                                                   size="sm"
+                                                  className="h-8"
                                                   onClick={() => {
                                                     const updatedFiles =
                                                       editingConsultation.prescription.files?.filter(
@@ -784,21 +1108,46 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
                                                     "completed"
                                                   }
                                                 >
-                                                  Remove
+                                                  <Trash2 className="h-3.5 w-3.5" />
+                                                  <span>Remove</span>
                                                 </Button>
                                               </div>
-                                            )
-                                          )}
-                                        </div>
-                                      )}
-                                  </div>
+                                            </div>
+                                          )
+                                        )}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-md">
+                                      <FileText className="h-8 w-8 text-muted-foreground mb-2" />
+                                      <p className="text-sm font-medium">
+                                        No prescriptions uploaded yet
+                                      </p>
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        Upload prescription files using the
+                                        input above
+                                      </p>
+                                    </div>
+                                  )}
                                 </div>
+                              </CardContent>
+                            </Card>
 
-                                {/* Instructions */}
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                  <label>Instructions</label>
+                            <Card>
+                              <CardHeader className="pb-3">
+                                <CardTitle className="text-base font-medium flex items-center gap-2">
+                                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                                  Prescription Instructions
+                                </CardTitle>
+                                <CardDescription>
+                                  Add detailed instructions for the patient
+                                </CardDescription>
+                              </CardHeader>
+                              <CardContent className="space-y-4">
+                                <div className="grid grid-cols-1 items-center gap-4">
                                   <Textarea
-                                    className="col-span-3"
+                                    className="min-h-[150px]"
+                                    placeholder="Enter detailed instructions for the patient..."
                                     value={
                                       editingConsultation?.prescription
                                         ?.instructions || ""
@@ -817,218 +1166,400 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
                                     }
                                   />
                                 </div>
+                              </CardContent>
+                            </Card>
 
-                                {/* Medicine */}
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                  <label htmlFor="">Medicine</label>
-                                  <MedicinePrescription
-                                    onselect={setSelectedMedicines}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Additional Information */}
-                            <div className="space-y-4 mt-4">
-                              <h3 className="text-lg font-semibold">
-                                Additional Information
-                              </h3>
-
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <label>Created At</label>
-                                <Input
-                                  className="col-span-3"
-                                  value={new Date(
-                                    editingConsultation?.createdAt || ""
-                                  ).toLocaleString()}
-                                  disabled
+                            <Card>
+                              <CardHeader className="pb-3">
+                                <CardTitle className="text-base font-medium flex items-center gap-2">
+                                  <FileText className="h-4 w-4 text-muted-foreground" />
+                                  Prescribed Medicines
+                                </CardTitle>
+                                <CardDescription>
+                                  Select medicines to prescribe to the patient
+                                </CardDescription>
+                              </CardHeader>
+                              <CardContent>
+                                <MedicinePrescription
+                                  onselect={setSelectedMedicines}
                                 />
-                              </div>
 
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <label>Last Updated</label>
-                                <Input
-                                  className="col-span-3"
-                                  value={new Date(
-                                    editingConsultation?.updatedAt || ""
-                                  ).toLocaleString()}
-                                  disabled
-                                />
-                              </div>
-
-                              {editingConsultation?.additionalInfo && (
-                                <>
-                                  <div className="grid grid-cols-4 items-center gap-4">
-                                    <label>Additional Files</label>
-                                    <div className="col-span-3">
-                                      {editingConsultation.additionalInfo.img?.map(
-                                        (imgUrl, index) => (
+                                {selectedMedicines.length > 0 && (
+                                  <div className="mt-4">
+                                    <Label>Selected Medicines</Label>
+                                    <div className="grid grid-cols-1 gap-2 mt-2">
+                                      {selectedMedicines.map(
+                                        (medicine, index) => (
                                           <div
-                                            key={`img-${index}`}
-                                            className="mb-2"
+                                            key={index}
+                                            className="flex items-center justify-between p-2 border rounded-md"
                                           >
-                                            <a
-                                              href={imgUrl}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="text-blue-600 hover:underline"
-                                            >
-                                              View Image {index + 1}
-                                            </a>
-                                          </div>
-                                        )
-                                      )}
-                                      {editingConsultation.additionalInfo.file?.map(
-                                        (fileUrl, index) => (
-                                          <div
-                                            key={`file-${index}`}
-                                            className="mb-2"
-                                          >
-                                            <a
-                                              href={fileUrl}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="text-blue-600 hover:underline"
-                                            >
-                                              View File {index + 1}
-                                            </a>
+                                            <span>{medicine}</span>
                                           </div>
                                         )
                                       )}
                                     </div>
                                   </div>
-                                </>
-                              )}
-                            </div>
+                                )}
+                              </CardContent>
+                            </Card>
+                          </TabsContent>
 
-                            {consultation.status === "completed" && (
-                              <div className="space-y-4 mt-4 border-t pt-4">
-                                <h3 className="text-lg font-semibold">
-                                  Schedule Feedback
-                                </h3>
-                                <RadioGroup
-                                  defaultValue="immediate"
-                                  onValueChange={(value) =>
-                                    setFeedbackSchedule({
-                                      type: value as "immediate" | "scheduled",
-                                      days: value === "scheduled" ? 30 : 0,
-                                    })
-                                  }
-                                >
-                                  <div className="flex items-center space-x-2">
-                                    <RadioGroupItem
-                                      value="immediate"
-                                      id="immediate"
-                                    />
-                                    <Label htmlFor="immediate">
-                                      Send Immediately
-                                    </Label>
-                                  </div>
-                                  <div className="flex items-center space-x-2">
-                                    <RadioGroupItem
-                                      value="scheduled"
-                                      id="scheduled"
-                                    />
-                                    <Label htmlFor="scheduled">
-                                      Schedule for Later
-                                    </Label>
-                                  </div>
-                                </RadioGroup>
+                          <TabsContent value="feedback" className="space-y-6">
+                            <Card>
+                              <CardHeader className="pb-3">
+                                <CardTitle className="text-base font-medium flex items-center gap-2">
+                                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                                  Feedback Management
+                                </CardTitle>
+                                <CardDescription>
+                                  Schedule and manage patient feedback for this
+                                  consultation
+                                </CardDescription>
+                              </CardHeader>
+                              <CardContent className="space-y-4">
+                                {editingConsultation.status === "completed" ? (
+                                  <div className="space-y-4">
+                                    <div className="flex items-center gap-2 p-3 bg-muted rounded-md">
+                                      <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                                      <p className="text-sm">
+                                        {editingConsultation.feedbackStatus ===
+                                        "submitted"
+                                          ? "Feedback has been submitted by the patient."
+                                          : editingConsultation.feedbackStatus ===
+                                            "sent"
+                                          ? "Feedback form has been sent to the patient."
+                                          : "This consultation is completed. You can now schedule a feedback form."}
+                                      </p>
+                                    </div>
 
-                                <div className="flex gap-4 items-center">
-                                  {feedbackSchedule.type === "scheduled" && (
-                                    <>
-                                      <Input
-                                        type="number"
-                                        min="1"
-                                        max="90"
-                                        value={feedbackSchedule.days}
-                                        onChange={(e) =>
-                                          setFeedbackSchedule({
-                                            ...feedbackSchedule,
-                                            days: parseInt(e.target.value),
-                                          })
+                                    {editingConsultation.feedbackStatus ===
+                                    "submitted" ? (
+                                      <Button
+                                        variant="outline"
+                                        className="w-full"
+                                        onClick={() =>
+                                          navigate(
+                                            `/feedback/${editingConsultation._id}`
+                                          )
                                         }
-                                        className="w-20 "
-                                      />
-                                      <span>
-                                        days after consultation (Default After
-                                        30days)
-                                      </span>
-                                    </>
-                                  )}
-                                </div>
-                                <Button
-                                  variant="outline"
-                                  className="flex items-center gap-2"
-                                  onClick={() =>
-                                    handleSubmitFeedback(
-                                      consultation._id,
-                                      consultation.email
-                                    )
-                                  }
-                                >
-                                  <Send className="h-4 w-4" />
-                                  {feedbackSchedule.type === "immediate"
-                                    ? "Send Now"
-                                    : "Schedule"}
-                                </Button>
-                              </div>
-                            )}
+                                      >
+                                        <Eye className="h-4 w-4 mr-2" />
+                                        View Feedback
+                                      </Button>
+                                    ) : (
+                                      editingConsultation.feedbackStatus !==
+                                        "sent" && (
+                                        <>
+                                          <div className="space-y-4 border-t pt-4">
+                                            <h3 className="text-sm font-medium">
+                                              Schedule Feedback
+                                            </h3>
+                                            <RadioGroup
+                                              defaultValue="immediate"
+                                              value={feedbackSchedule.type}
+                                              onValueChange={(value) =>
+                                                setFeedbackSchedule({
+                                                  type: value as
+                                                    | "immediate"
+                                                    | "scheduled",
+                                                  days:
+                                                    value === "scheduled"
+                                                      ? 30
+                                                      : 0,
+                                                })
+                                              }
+                                            >
+                                              <div className="flex items-center space-x-2">
+                                                <RadioGroupItem
+                                                  value="immediate"
+                                                  id="immediate"
+                                                />
+                                                <Label htmlFor="immediate">
+                                                  Send Immediately
+                                                </Label>
+                                              </div>
+                                              <div className="flex items-center space-x-2">
+                                                <RadioGroupItem
+                                                  value="scheduled"
+                                                  id="scheduled"
+                                                />
+                                                <Label htmlFor="scheduled">
+                                                  Schedule for Later
+                                                </Label>
+                                              </div>
+                                            </RadioGroup>
 
-                            {/* New button to view feedback */}
-                            {consultation.feedbackStatus === "submitted" && (
-                              <Button
-                                variant="outline"
-                                onClick={() =>
-                                  navigate(`/feedback/${consultation._id}`)
-                                }
-                              >
-                                View Feedback
-                              </Button>
-                            )}
+                                            {feedbackSchedule.type ===
+                                              "scheduled" && (
+                                              <div className="flex gap-4 items-center">
+                                                <Input
+                                                  type="number"
+                                                  min="1"
+                                                  max="90"
+                                                  value={feedbackSchedule.days}
+                                                  onChange={(e) =>
+                                                    setFeedbackSchedule({
+                                                      ...feedbackSchedule,
+                                                      days: Number.parseInt(
+                                                        e.target.value
+                                                      ),
+                                                    })
+                                                  }
+                                                  className="w-20"
+                                                />
+                                                <span className="text-sm">
+                                                  days after consultation
+                                                  (Default: 30 days)
+                                                </span>
+                                              </div>
+                                            )}
 
-                            {/* Action Buttons */}
-                            <div className="flex justify-end gap-4 mt-4">
-                              <Button
-                                variant="outline"
-                                onClick={() => setEditingConsultation(null)}
-                              >
-                                Cancel
-                              </Button>
-                              <Button
-                                variant="default"
-                                onClick={handleUpdateConsultation}
-                                disabled={isConsultationUpdated}
-                              >
-                                Update Consultation
-                              </Button>
-                            </div>
+                                            <Button
+                                              variant="outline"
+                                              className="flex items-center gap-2 w-full"
+                                              onClick={() =>
+                                                handleSubmitFeedback(
+                                                  editingConsultation._id,
+                                                )
+                                              }
+                                            >
+                                              <Send className="h-4 w-4" />
+                                              {feedbackSchedule.type ===
+                                              "immediate"
+                                                ? "Send Feedback Form Now"
+                                                : "Schedule Feedback Form"}
+                                            </Button>
+                                          </div>
+                                        </>
+                                      )
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-md">
+                                    <AlertCircle className="h-8 w-8 text-muted-foreground mb-2" />
+                                    <p className="text-sm font-medium">
+                                      Feedback not available
+                                    </p>
+                                    <p className="text-xs text-muted-foreground mt-1 text-center">
+                                      Feedback can only be scheduled after the
+                                      consultation is marked as completed
+                                    </p>
+                                  </div>
+                                )}
+                              </CardContent>
+                            </Card>
+
+                            {editingConsultation?.additionalInfo && (
+                              <Card>
+                                <CardHeader className="pb-3">
+                                  <CardTitle className="text-base font-medium flex items-center gap-2">
+                                    <FileText className="h-4 w-4 text-muted-foreground" />
+                                    Additional Information
+                                  </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                  <div className="space-y-4">
+                                    {editingConsultation.additionalInfo.img &&
+                                      editingConsultation.additionalInfo.img
+                                        .length > 0 && (
+                                        <div className="space-y-2">
+                                          <Label>Images</Label>
+                                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                            {editingConsultation.additionalInfo.img.map(
+                                              (imgUrl, index) => (
+                                                <a
+                                                  key={`img-${index}`}
+                                                  href={imgUrl}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className="block border rounded-md overflow-hidden hover:border-primary transition-colors"
+                                                >
+                                                  <img
+                                                    src={
+                                                      imgUrl ||
+                                                      "/placeholder.svg"
+                                                    }
+                                                    alt={`Additional image ${
+                                                      index + 1
+                                                    }`}
+                                                    className="w-full h-32 object-cover"
+                                                  />
+                                                  <div className="p-2 text-xs text-center">
+                                                    Image {index + 1}
+                                                  </div>
+                                                </a>
+                                              )
+                                            )}
+                                          </div>
+                                        </div>
+                                      )}
+
+                                    {editingConsultation.additionalInfo.file &&
+                                      editingConsultation.additionalInfo.file
+                                        .length > 0 && (
+                                        <div className="space-y-2">
+                                          <Label>Files</Label>
+                                          <div className="grid grid-cols-1 gap-2">
+                                            {editingConsultation.additionalInfo.file.map(
+                                              (fileUrl, index) => (
+                                                <div
+                                                  key={`file-${index}`}
+                                                  className="flex items-center justify-between p-3 border rounded-md"
+                                                >
+                                                  <div className="flex items-center gap-2">
+                                                    <FileText className="h-4 w-4 text-muted-foreground" />
+                                                    <span className="text-sm">
+                                                      Additional File{" "}
+                                                      {index + 1}
+                                                    </span>
+                                                  </div>
+                                                  <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-8"
+                                                    asChild
+                                                  >
+                                                    <a
+                                                      href={fileUrl}
+                                                      target="_blank"
+                                                      rel="noopener noreferrer"
+                                                      className="flex items-center gap-1"
+                                                    >
+                                                      <Download className="h-3.5 w-3.5" />
+                                                      <span>Download</span>
+                                                    </a>
+                                                  </Button>
+                                                </div>
+                                              )
+                                            )}
+                                          </div>
+                                        </div>
+                                      )}
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            )}
+                          </TabsContent>
+                        </Tabs>
+
+                        <DialogFooter className="flex justify-between items-center gap-2 pt-4 border-t mt-6">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span>
+                              Created:{" "}
+                              {new Date(
+                                editingConsultation.createdAt
+                              ).toLocaleString()}
+                            </span>
+                            <Separator orientation="vertical" className="h-3" />
+                            <span>
+                              Updated:{" "}
+                              {new Date(
+                                editingConsultation.updatedAt
+                              ).toLocaleString()}
+                            </span>
                           </div>
-                        </DialogContent>
-                      )}
-                    </Dialog>
-                  </div>
+                          <div className="flex items-center gap-2">
+                            <DialogClose asChild>
+                              <Button variant="outline">Cancel</Button>
+                            </DialogClose>
+                            <Button
+                              onClick={() => handleUpdateConsultation(index)}
+                              disabled={!isConsultationUpdated}
+                              className="gap-2"
+                            >
+                              {isConsultationUpdated ? (
+                                <>
+                                  <Save className="h-4 w-4" />
+                                  Save Changes
+                                </>
+                              ) : (
+                                "No Changes"
+                              )}
+                            </Button>
+                          </div>
+                        </DialogFooter>
+                      </MotionDialogContent>
+                    )}
+                  </Dialog>
 
-                  <Trash2
-                    className="text-red-500 hover:text-red-700 cursor-pointer"
-                    onClick={() =>
-                      handleDeleteConsultation(
-                        consultation._id,
-                        consultation.contact
-                      )
-                    }
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
-          {!consultationsArray.length && (
-            <p className="flex justify-center py-4">
-              No consultationsArray found.
-            </p>
-          )}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        // onClick={() => setEditingConsultation(consultation)}
+                        className="cursor-pointer"
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        {consultation.invoiceId ? "View Invoice" : "Generate Invoice"}
+                      </DropdownMenuItem>
+                      {consultation.status === "completed" &&
+                        consultation.feedbackStatus !== "submitted" && (
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setEditingConsultation(consultation);
+                              setActiveTab("feedback");
+                            }}
+                            className="cursor-pointer"
+                          >
+                            <Send className="h-4 w-4 mr-2" />
+                            Send Feedback
+                          </DropdownMenuItem>
+                        )}
+                      {consultation.feedbackStatus === "submitted" && (
+                        <DropdownMenuItem
+                          onClick={() =>
+                            navigate(`/feedback/${consultation._id}`)
+                          }
+                          className="cursor-pointer"
+                        >
+                          <MessageSquare className="h-4 w-4 mr-2" />
+                          View Feedback
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => confirmDeleteConsultation(consultation)}
+                        className="text-destructive focus:text-destructive cursor-pointer"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Consultation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this consultation for{" "}
+              {consultationToDelete?.name}? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConsultation}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

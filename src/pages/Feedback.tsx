@@ -1,8 +1,16 @@
+import AccessDenied from "@/components/AccessDenied";
 import { useEffect, useState } from "react";
+import Cookies from "js-cookie";
 
 export default function FeedbackPage() {
   const [feedback, setFeedback] = useState([]);
-
+  const permissions = JSON.parse(localStorage.getItem("permissions") || "[]");
+  if (
+    !permissions?.includes("feedback") &&
+    Cookies.get("role") !== "super_admin"
+  ) {
+    return <AccessDenied />;
+  }
   useEffect(() => {
     const fetchFeedback = async () => {
       // Fetch feedback data from the API

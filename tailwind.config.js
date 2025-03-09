@@ -6,6 +6,13 @@ export default {
 		"./src/**/*.{js,ts,jsx,tsx}",
 	],
 	theme: {
+		container: {
+			center: true,
+			padding: "2rem",
+			screens: {
+				"2xl": "1500px",
+			},
+		},
 		extend: {
 			colors: {
 				primary: {
@@ -48,6 +55,10 @@ export default {
 					DEFAULT: 'hsl(var(--destructive))',
 					foreground: 'hsl(var(--destructive-foreground))'
 				},
+				popover: {
+					DEFAULT: "hsl(var(--popover))",
+					foreground: "hsl(var(--popover-foreground))",
+				},
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
@@ -68,7 +79,31 @@ export default {
 				width: '8px',
 				track: 'bg-gray-100',
 				thumb: 'bg-gray-300 rounded hover:bg-gray-400'
-			}
+			},
+			keyframes: {
+				"accordion-down": {
+					from: { height: 0 },
+					to: { height: "var(--radix-accordion-content-height)" },
+				},
+				"accordion-up": {
+					from: { height: "var(--radix-accordion-content-height)" },
+					to: { height: 0 },
+				},
+				"fade-in": {
+					from: { opacity: 0 },
+					to: { opacity: 1 },
+				},
+				"slide-up": {
+					from: { transform: "translateY(10px)", opacity: 0 },
+					to: { transform: "translateY(0)", opacity: 1 },
+				},
+			},
+			animation: {
+				"accordion-down": "accordion-down 0.2s ease-out",
+				"accordion-up": "accordion-up 0.2s ease-out",
+				"fade-in": "fade-in 0.3s ease-out",
+				"slide-up": "slide-up 0.3s ease-out",
+			},
 		}
 	},
 	plugins: [require("tailwindcss-animate"), require('tailwind-scrollbar'), require('tailwind-scrollbar-hide')],
