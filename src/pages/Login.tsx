@@ -23,18 +23,23 @@ export default function Login() {
       console.log("Login response:", response);
 
       if (response.success && response.user) {
-        dispatch(setCredentials({ user: response.user, token: response.token }));
+        dispatch(
+          setCredentials({ user: response.user, token: response.token })
+        );
         // localStorage.setItem("adminToken", response.token);
         // Cookies.set("adminToken", response.token, {
         //   expires: 7,
         // });
         toast.success("Login successful");
         console.log(response);
-        localStorage.setItem("permissions", JSON.stringify(response.user.permissions));
-        localStorage.setItem("authorization", response.authorization);
-        Cookies.set("authotization", response.authorization)
+        localStorage.setItem(
+          "permissions",
+          JSON.stringify(response.user.permissions)
+        );
+        Cookies.set("authorization", response.authorization);
         localStorage.setItem("role", response.user.role);
-        
+        Cookies.set("role", response.user.role);
+
         navigate("/", { replace: true });
       }
     } catch (error: any) {
