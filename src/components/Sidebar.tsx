@@ -20,7 +20,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import Cookies from "js-cookie"
 
 interface SidebarProps {
   open: boolean
@@ -67,7 +66,7 @@ export default function Sidebar({ open, setOpen }: SidebarProps) {
       setPermissions(storedPermissions)
 
       // Get role from localStorage
-      const storedRole = Cookies.get("role") || ""
+      const storedRole = localStorage.getItem("role")
       setRole(storedRole)
 
       // Get admin name from localStorage

@@ -31,6 +31,7 @@ export default function Login() {
         toast.success("Login successful");
         console.log(response);
         localStorage.setItem("permissions", JSON.stringify(response.user.permissions));
+        localStorage.setItem("role", response.user.role);
         
         navigate("/", { replace: true });
       }
