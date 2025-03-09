@@ -5,7 +5,7 @@ import { toast } from "react-hot-toast";
 import { Card } from "@/components/ui/card";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "@/store/authSlice";
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
 
 export default function Login() {
   const [email, setEmail] = useState("");
