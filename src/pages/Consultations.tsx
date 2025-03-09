@@ -98,7 +98,7 @@ export default function Consultations() {
   const permissions = JSON.parse(localStorage.getItem("permissions") || "[]");
   const hasAccess =
     permissions?.includes("consultations") ||
-    Cookies.get("role") === "super_admin";
+    localStorage.getItem("role") === "super_admin";
 
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [loading, setLoading] = useState(true);

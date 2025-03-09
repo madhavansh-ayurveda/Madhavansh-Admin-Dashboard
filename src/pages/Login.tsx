@@ -31,14 +31,13 @@ export default function Login() {
         //   expires: 7,
         // });
         toast.success("Login successful");
-        console.log(response);
         localStorage.setItem(
           "permissions",
           JSON.stringify(response.user.permissions)
         );
-        Cookies.set("authorization", response.authorization);
         localStorage.setItem("role", response.user.role);
-        Cookies.set("role", response.user.role);
+        Cookies.set("authorization", response.authorization, { expires: 1 });
+        Cookies.set("role", response.user.role, { expires: 1 });
 
         navigate("/", { replace: true });
       }

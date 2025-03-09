@@ -23,7 +23,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { adminApi } from "@/api/adminApi";
 import AccessDenied from "@/components/AccessDenied";
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {

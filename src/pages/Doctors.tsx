@@ -68,7 +68,7 @@ import {
 
 export default function Doctors() {
   const permissions = JSON.parse(localStorage.getItem("permissions") || "[]");
-  const hasDoctorsPermission = permissions?.includes("doctors") || Cookies.get("role") === "super_admin";
+  const hasDoctorsPermission = permissions?.includes("doctors") || localStorage.getItem("role") === "super_admin";
   
   const [showAddForm, setShowAddForm] = useState(false);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
