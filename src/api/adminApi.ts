@@ -17,12 +17,12 @@ export const adminApi = {
       }
     }
   },
-  getAllAdmins: async (page = 1, limit = 10) => {
+  getAllAdmins: async () => {
     try {
-      const queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-      });
+      // const queryParams = new URLSearchParams({
+      //   page: page.toString(),
+      //   limit: limit.toString(),
+      // });
       const response = await AdminApi.get(`/manage`);
       console.log(response);
 
