@@ -91,7 +91,7 @@ export default function AdminManagement() {
   const [error, setError] = useState<string | null>(null);
 
   const permissions = JSON.parse(localStorage.getItem("permissions") || "[]");
-  const userRole = Cookies.get("role");
+  const userRole = localStorage.getItem("role");
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
