@@ -1,7 +1,7 @@
 import axios from "axios";
 import { store } from "@/store";
 
-const API_URL = import.meta.env.VITE_SERVER_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_SERVER_API_URL;
 
 console.log(API_URL);
 export const api = axios.create({

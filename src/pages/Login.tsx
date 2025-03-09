@@ -5,7 +5,7 @@ import { toast } from "react-hot-toast";
 import { Card } from "@/components/ui/card";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "@/store/authSlice";
-// import Cookies from "js-cookie";
+import Cookies from "js-cookie";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -31,6 +31,8 @@ export default function Login() {
         toast.success("Login successful");
         console.log(response);
         localStorage.setItem("permissions", JSON.stringify(response.user.permissions));
+        localStorage.setItem("authorization", response.authorization);
+        Cookies.set("authotization", response.authorization)
         localStorage.setItem("role", response.user.role);
         
         navigate("/", { replace: true });
