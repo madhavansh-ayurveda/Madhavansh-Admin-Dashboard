@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { medicineApi } from "@/api/medicineApi";
 import { Button } from "@/components/ui/button";
@@ -7,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Medicine } from "@/types";
 import MultiSelect from "@/components/ui/multiple-select";
 import { toast } from "sonner";
-import Cookies from "js-cookie";
 import AccessDenied from "@/components/AccessDenied";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
