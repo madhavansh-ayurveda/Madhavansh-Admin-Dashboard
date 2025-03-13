@@ -140,7 +140,7 @@ export default function Doctors() {
   }, []);
 
   // Filter doctors based on search term across all fields
-  const filteredDoctors = doctors.filter(
+  const filteredDoctors = doctors?.filter(
     (doctor) =>
       doctor?.name.toLowerCase()?.includes(searchTerm.toLowerCase()) ||
       doctor?.email.toLowerCase()?.includes(searchTerm.toLowerCase()) ||
