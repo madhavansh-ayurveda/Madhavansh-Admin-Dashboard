@@ -155,7 +155,7 @@ export default function Doctors() {
 
   const indexOfLastDoctor = currentPage * itemsPerPage;
   const indexOfFirstDoctor = indexOfLastDoctor - itemsPerPage;
-  const currentDoctors = filteredDoctors.slice(
+  const currentDoctors = filteredDoctors?.slice(
     indexOfFirstDoctor,
     indexOfLastDoctor
   );
