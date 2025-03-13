@@ -36,6 +36,7 @@ export default function Login() {
           JSON.stringify(response.user.permissions)
         );
         localStorage.setItem("role", response.user.role);
+        localStorage.setItem("authorization", response.authorization);
         Cookies.set("authorization", response.authorization, { expires: 1 });
         Cookies.set("role", response.user.role, { expires: 1 });
 

@@ -116,7 +116,7 @@ export default function Doctors() {
         const response = await doctorApi.getAllDoctors();
         setTotalPages(response.totalPages);
         setDoctors(response.data);
-        if (response.success == "true") {
+        if (response.data) {
           dispatch(
             setCacheData({
               key: cacheKey,

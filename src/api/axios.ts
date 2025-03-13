@@ -25,7 +25,7 @@ AdminApi.interceptors.request.use(
     const state = store.getState();
     const token = state.auth.token;
     const authorization = localStorage.getItem("authorization");
-    // console.log(token);
+    console.log(authorization);
 
     if (token) {
       config.headers.Authorization = ` Bearer ${token} ${authorization}`;
