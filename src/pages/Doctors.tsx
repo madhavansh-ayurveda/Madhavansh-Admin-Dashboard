@@ -365,7 +365,7 @@ export default function Doctors() {
                           <TableCell className="font-medium">{doctor.name}</TableCell>
                           <TableCell className="hidden md:table-cell">
                             <div className="flex flex-wrap gap-1">
-                              {doctor.specialization.slice(0, 2).map((spec, i) => (
+                              {doctor.specialization?.slice(0, 2).map((spec, i) => (
                                 <Badge key={i} variant="outline" className="bg-primary/5 text-primary">
                                   {spec}
                                 </Badge>
@@ -379,7 +379,7 @@ export default function Doctors() {
                           </TableCell>
                           <TableCell className="hidden md:table-cell">
                             <div className="flex flex-wrap gap-1">
-                              {doctor.department.slice(0, 2).map((dept, i) => (
+                              {doctor.department?.slice(0, 2).map((dept, i) => (
                                 <Badge key={i} variant="secondary" className="bg-secondary/20">
                                   {dept}
                                 </Badge>

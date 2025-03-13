@@ -68,7 +68,9 @@ export type CreateDoctorDto = {
 
 export const doctorApi = {
   getAllDoctors: async (page = 1, limit = 10) => {
+    console.log("get all doctors")
     const response = await AdminApi.get(`/doctors?page=${page}&limit=${limit}`);
+    console.log("get all doctors response ", response);
     return response.data;
   },
 
