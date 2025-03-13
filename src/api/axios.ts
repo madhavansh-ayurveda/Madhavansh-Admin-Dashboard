@@ -1,5 +1,4 @@
 import axios from "axios";
-import { store } from "@/store";
 
 const API_URL = import.meta.env.VITE_SERVER_API_URL;
 
@@ -22,12 +21,11 @@ export const AdminApi = axios.create({
 
 AdminApi.interceptors.request.use(
   (config) => {
-    const state = store.getState();
-    const token = state.auth.token;
+    const token = localStorage.getItem("authorization");
     // console.log(token);
 
     if (token) {
-      config.headers.Authorization = `${token}`;
+      config.headers.Authorization = `Bearer ${token}`;
     }
 
     return config;

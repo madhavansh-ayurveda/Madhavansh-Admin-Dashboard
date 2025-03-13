@@ -9,7 +9,19 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Trash2, Search, Plus, Edit, RefreshCw, UserPlus, Filter, X, ChevronLeft, ChevronRight, Stethoscope } from 'lucide-react';
+import {
+  Trash2,
+  Search,
+  Plus,
+  Edit,
+  RefreshCw,
+  UserPlus,
+  Filter,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Stethoscope,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -67,8 +79,10 @@ import {
 
 export default function Doctors() {
   const permissions = JSON.parse(localStorage.getItem("permissions") || "[]");
-  const hasDoctorsPermission = permissions?.includes("doctors") || localStorage.getItem("role") === "super_admin";
-  
+  const hasDoctorsPermission =
+    permissions?.includes("doctors") ||
+    localStorage.getItem("role") === "super_admin";
+
   const [showAddForm, setShowAddForm] = useState(false);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -79,7 +93,7 @@ export default function Doctors() {
   const [itemsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  
+
   const dispatch = useDispatch();
   const cacheKey = `doctors_page_${currentPage}_search_${searchTerm}`;
   const cachedData = useSelector((state: RootState) =>
@@ -102,14 +116,17 @@ export default function Doctors() {
         const response = await doctorApi.getAllDoctors();
         setTotalPages(response.totalPages);
         setDoctors(response.data);
-
-        dispatch(
-          setCacheData({
-            key: cacheKey,
-            data: response.data,
-            totalPages: Math.ceil(response.data.length / itemsPerPage),
-          })
-        );
+        if (response.success == "true") {
+          dispatch(
+            setCacheData({
+              key: cacheKey,
+              data: response.data,
+              totalPages: Math.ceil(response.data.length / itemsPerPage),
+            })
+          );
+        } else {
+          setError("Error fetching doctors. Response data");
+        }
       } catch (err) {
         setError("Failed to fetch doctors. Please try again later.");
         console.error("Error fetching doctors:", err);
@@ -239,7 +256,11 @@ export default function Doctors() {
                       disabled={isLoading || isRefreshing}
                       className="rounded-full"
                     >
-                      <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                      <RefreshCw
+                        className={`h-4 w-4 ${
+                          isRefreshing ? "animate-spin" : ""
+                        }`}
+                      />
                       <span className="sr-only">Refresh</span>
                     </Button>
                   </TooltipTrigger>
@@ -248,11 +269,8 @@ export default function Doctors() {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              
-              <Button
-                onClick={() => setShowAddForm(true)}
-                className="gap-2"
-              >
+
+              <Button onClick={() => setShowAddForm(true)} className="gap-2">
                 <UserPlus className="h-4 w-4" />
                 <span className="hidden sm:inline">Add New Doctor</span>
                 <span className="sm:hidden">Add</span>
@@ -260,7 +278,7 @@ export default function Doctors() {
             </div>
           </div>
         </CardHeader>
-        
+
         <CardContent className="px-0 space-y-5">
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
             <div className="relative w-full sm:w-96">
@@ -285,7 +303,7 @@ export default function Doctors() {
                 </Button>
               )}
             </div>
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="gap-2">
@@ -296,15 +314,9 @@ export default function Doctors() {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Filter by</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  Specialization
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  Department
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  Experience
-                </DropdownMenuItem>
+                <DropdownMenuItem>Specialization</DropdownMenuItem>
+                <DropdownMenuItem>Department</DropdownMenuItem>
+                <DropdownMenuItem>Experience</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setSearchTerm("")}>
                   Clear filters
@@ -317,15 +329,17 @@ export default function Doctors() {
             {isLoading ? (
               <CardContent className="p-6">
                 <div className="space-y-4">
-                  {Array(5).fill(0).map((_, index) => (
-                    <div key={index} className="flex items-center space-x-4">
-                      <Skeleton className="h-12 w-12 rounded-full" />
-                      <div className="space-y-2">
-                        <Skeleton className="h-4 w-[250px]" />
-                        <Skeleton className="h-4 w-[200px]" />
+                  {Array(5)
+                    .fill(0)
+                    .map((_, index) => (
+                      <div key={index} className="flex items-center space-x-4">
+                        <Skeleton className="h-12 w-12 rounded-full" />
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-[250px]" />
+                          <Skeleton className="h-4 w-[200px]" />
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </CardContent>
             ) : error ? (
@@ -350,11 +364,21 @@ export default function Doctors() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Name</TableHead>
-                      <TableHead className="hidden md:table-cell">Specialization</TableHead>
-                      <TableHead className="hidden md:table-cell">Department</TableHead>
-                      <TableHead className="hidden sm:table-cell">Email</TableHead>
-                      <TableHead className="hidden lg:table-cell">Phone</TableHead>
-                      <TableHead className="hidden xl:table-cell">Experience</TableHead>
+                      <TableHead className="hidden md:table-cell">
+                        Specialization
+                      </TableHead>
+                      <TableHead className="hidden md:table-cell">
+                        Department
+                      </TableHead>
+                      <TableHead className="hidden sm:table-cell">
+                        Email
+                      </TableHead>
+                      <TableHead className="hidden lg:table-cell">
+                        Phone
+                      </TableHead>
+                      <TableHead className="hidden xl:table-cell">
+                        Experience
+                      </TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -362,14 +386,22 @@ export default function Doctors() {
                     {currentDoctors?.length > 0 ? (
                       currentDoctors.map((doctor) => (
                         <TableRow key={doctor._id}>
-                          <TableCell className="font-medium">{doctor.name}</TableCell>
+                          <TableCell className="font-medium">
+                            {doctor.name}
+                          </TableCell>
                           <TableCell className="hidden md:table-cell">
                             <div className="flex flex-wrap gap-1">
-                              {doctor.specialization?.slice(0, 2).map((spec, i) => (
-                                <Badge key={i} variant="outline" className="bg-primary/5 text-primary">
-                                  {spec}
-                                </Badge>
-                              ))}
+                              {doctor.specialization
+                                ?.slice(0, 2)
+                                .map((spec, i) => (
+                                  <Badge
+                                    key={i}
+                                    variant="outline"
+                                    className="bg-primary/5 text-primary"
+                                  >
+                                    {spec}
+                                  </Badge>
+                                ))}
                               {doctor.specialization?.length > 2 && (
                                 <Badge variant="outline" className="bg-muted">
                                   +{doctor.specialization.length - 2}
@@ -380,7 +412,11 @@ export default function Doctors() {
                           <TableCell className="hidden md:table-cell">
                             <div className="flex flex-wrap gap-1">
                               {doctor.department?.slice(0, 2).map((dept, i) => (
-                                <Badge key={i} variant="secondary" className="bg-secondary/20">
+                                <Badge
+                                  key={i}
+                                  variant="secondary"
+                                  className="bg-secondary/20"
+                                >
                                   {dept}
                                 </Badge>
                               ))}
@@ -420,7 +456,7 @@ export default function Doctors() {
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
-                              
+
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                   <Button
@@ -434,16 +470,24 @@ export default function Doctors() {
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                   <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogTitle>
+                                      Are you sure?
+                                    </AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      This will permanently delete Dr. {doctor.name}'s record. This action cannot be undone.
+                                      This will permanently delete Dr.{" "}
+                                      {doctor.name}'s record. This action cannot
+                                      be undone.
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogCancel>
+                                      Cancel
+                                    </AlertDialogCancel>
                                     <AlertDialogAction
                                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                      onClick={() => handleDeleteDoctor(doctor._id)}
+                                      onClick={() =>
+                                        handleDeleteDoctor(doctor._id)
+                                      }
                                     >
                                       Delete
                                     </AlertDialogAction>
@@ -460,12 +504,14 @@ export default function Doctors() {
                           {searchTerm ? (
                             <div className="flex flex-col items-center justify-center py-4">
                               <Search className="h-10 w-10 text-muted-foreground mb-2" />
-                              <p className="text-lg font-medium">No doctors found</p>
+                              <p className="text-lg font-medium">
+                                No doctors found
+                              </p>
                               <p className="text-sm text-muted-foreground">
                                 No doctors match your search criteria
                               </p>
-                              <Button 
-                                variant="link" 
+                              <Button
+                                variant="link"
                                 onClick={() => setSearchTerm("")}
                                 className="mt-2"
                               >
@@ -475,12 +521,14 @@ export default function Doctors() {
                           ) : (
                             <div className="flex flex-col items-center justify-center py-4">
                               <Stethoscope className="h-10 w-10 text-muted-foreground mb-2" />
-                              <p className="text-lg font-medium">No doctors yet</p>
+                              <p className="text-lg font-medium">
+                                No doctors yet
+                              </p>
                               <p className="text-sm text-muted-foreground">
                                 Get started by adding a new doctor
                               </p>
-                              <Button 
-                                variant="default" 
+                              <Button
+                                variant="default"
                                 onClick={() => setShowAddForm(true)}
                                 className="mt-4"
                               >
@@ -498,13 +546,14 @@ export default function Doctors() {
             )}
           </Card>
         </CardContent>
-        
+
         <CardFooter className="px-0 flex flex-col sm:flex-row items-center justify-between gap-4 border-t pt-6">
           <div className="text-sm text-muted-foreground">
             Showing {currentDoctors?.length > 0 ? indexOfFirstDoctor + 1 : 0} to{" "}
-            {Math.min(indexOfLastDoctor, filteredDoctors?.length)} of {filteredDoctors?.length} doctors
+            {Math.min(indexOfLastDoctor, filteredDoctors?.length)} of{" "}
+            {filteredDoctors?.length} doctors
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -516,7 +565,7 @@ export default function Doctors() {
               <ChevronLeft className="h-4 w-4" />
               <span className="sr-only">Previous page</span>
             </Button>
-            
+
             <div className="flex items-center gap-1">
               {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                 let pageNum = i + 1;
@@ -526,21 +575,23 @@ export default function Doctors() {
                     pageNum = totalPages - (4 - i);
                   }
                 }
-                
+
                 return (
                   <Button
                     key={i}
                     variant={currentPage === pageNum ? "default" : "outline"}
                     size="sm"
                     onClick={() => setCurrentPage(pageNum)}
-                    className={`h-8 w-8 p-0 ${currentPage === pageNum ? 'pointer-events-none' : ''}`}
+                    className={`h-8 w-8 p-0 ${
+                      currentPage === pageNum ? "pointer-events-none" : ""
+                    }`}
                   >
                     {pageNum}
                   </Button>
                 );
               })}
             </div>
-            
+
             <Button
               variant="outline"
               size="sm"
