@@ -21,7 +21,6 @@ import {
 import { RootState } from "@/store";
 import { toast } from "sonner";
 import AccessDenied from "@/components/AccessDenied";
-import Cookies from "js-cookie";
 import {
   Card,
   CardContent,
@@ -143,14 +142,14 @@ export default function Doctors() {
   // Filter doctors based on search term across all fields
   const filteredDoctors = doctors.filter(
     (doctor) =>
-      doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctor.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doctor.specialization.some((spec) =>
-        spec.toLowerCase().includes(searchTerm.toLowerCase())
+      doctor?.name.toLowerCase()?.includes(searchTerm.toLowerCase()) ||
+      doctor?.email.toLowerCase()?.includes(searchTerm.toLowerCase()) ||
+      doctor?.phone.toLowerCase()?.includes(searchTerm.toLowerCase()) ||
+      doctor?.specialization?.some((spec) =>
+        spec.toLowerCase()?.includes(searchTerm.toLowerCase())
       ) ||
-      doctor.department.some((dept) =>
-        dept.toLowerCase().includes(searchTerm.toLowerCase())
+      doctor.department?.some((dept) =>
+        dept.toLowerCase()?.includes(searchTerm.toLowerCase())
       )
   );
 
