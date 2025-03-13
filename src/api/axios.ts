@@ -25,10 +25,11 @@ AdminApi.interceptors.request.use(
     const state = store.getState();
     const token = state.auth.token;
     const authorization = localStorage.getItem("authorization");
+    const role = localStorage.getItem("role");
     console.log(authorization);
 
     if (token) {
-      config.headers.Authorization = ` Bearer ${token} ${authorization} ${localStorage.getItem("role")}`;
+      config.headers.Authorization = ` Bearer ${token} ${authorization} ${role}`;
     }
 
     return config;
