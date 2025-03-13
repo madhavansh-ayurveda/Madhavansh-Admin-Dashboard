@@ -28,7 +28,7 @@ AdminApi.interceptors.request.use(
     console.log(authorization);
 
     if (token) {
-      config.headers.Authorization = ` Bearer ${token} ${authorization}`;
+      config.headers.Authorization = ` Bearer ${token} ${authorization} ${localStorage.getItem("role")}`;
     }
 
     return config;
