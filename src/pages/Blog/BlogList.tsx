@@ -164,7 +164,7 @@ export default function BlogList() {
   const getExcerpt = (content: string, maxLength = 120) => {
     // Remove HTML tags
     const plainText = content.replace(/<[^>]+>/g, "");
-    if (plainText.length <= maxLength) return plainText;
+    if (plainText?.length <= maxLength) return plainText;
     return plainText.substring(0, maxLength) + "...";
   };
 
@@ -338,7 +338,7 @@ export default function BlogList() {
             >
               {renderSkeletons()}
             </div>
-          ) : filteredPosts.length === 0 ? (
+          ) : filteredPosts?.length === 0 ? (
             <div className="text-center py-12">
               <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
                 <FileText className="h-6 w-6 text-muted-foreground" />

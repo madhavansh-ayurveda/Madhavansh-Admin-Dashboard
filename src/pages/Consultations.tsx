@@ -163,7 +163,7 @@ export default function Consultations() {
   useEffect(() => {
     setIsFilterApplied(
       !!selectedStatus ||
-        selectedTypes.length > 0 ||
+        selectedTypes?.length > 0 ||
         !!startDate ||
         !!endDate ||
         !!debouncedSearchQuery
@@ -465,7 +465,7 @@ export default function Consultations() {
                       <span>Filters</span>
                       {isFilterApplied && (
                         <Badge variant="secondary" className="ml-1 h-5 px-1.5">
-                          {selectedTypes.length +
+                          {selectedTypes?.length +
                             (selectedStatus ? 1 : 0) +
                             (startDate ? 1 : 0) +
                             (endDate ? 1 : 0) +
@@ -696,7 +696,7 @@ export default function Consultations() {
               </div>
             ) : (
               <>
-                {consultations.length === 0 ? (
+                {consultations?.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 px-4">
                     <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
                       <Calendar className="h-6 w-6 text-muted-foreground" />
@@ -727,7 +727,7 @@ export default function Consultations() {
       </div>
 
       {/* Pagination */}
-      {!loading && consultations.length > 0 && (
+      {!loading && consultations?.length > 0 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
             Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}

@@ -303,7 +303,7 @@ export default function Users() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.length > 0 ? (
+                {users?.length > 0 ? (
                   users?.map((user) => (
                     <TableRow key={user._id} className="text-sm md:text-base">
                       <TableCell>{user.name}</TableCell>

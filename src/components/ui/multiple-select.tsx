@@ -40,7 +40,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
       );
       setFilterOptions(filtered);
       
-      if (filtered.length === 0 && searchFallback) {
+      if (filtered?.length === 0 && searchFallback) {
         const fallbackOptions = await searchFallback(searchTerm);
         setFilterOptions(fallbackOptions);
       }
@@ -99,7 +99,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
         className="flex items-center justify-between p-2 border rounded cursor-pointer"
       >
         <div className="flex flex-wrap gap-1 max-h-[35px] max-w-[90%] overflow-y-auto scrollbar-hide">
-          {selectedOptions.length === 0 ? (
+          {selectedOptions?.length === 0 ? (
             <span className="text-gray-500">{placeholder}</span>
           ) : (
             selectedOptions.map((value) => (
@@ -156,7 +156,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
           </div>
 
           <div className="overflow-y-auto max-h-52 scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400">
-            {filteredOptions.length > 0 ? (
+            {filteredOptions?.length > 0 ? (
               filteredOptions.map((option) => (
                 <div
                   key={option}

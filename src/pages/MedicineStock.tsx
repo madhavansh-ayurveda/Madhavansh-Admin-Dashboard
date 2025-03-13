@@ -103,7 +103,7 @@ const MedicineStock = () => {
     }
 
     // Apply department filter
-    if (selectedDepartments.length > 0) {
+    if (selectedDepartments?.length > 0) {
       result = result.filter((medicine) =>
         medicine.relatedToTreatments?.some((dept) =>
           selectedDepartments.includes(dept)
@@ -149,7 +149,7 @@ const MedicineStock = () => {
       !formData.name ||
       !formData.price ||
       !formData.stock ||
-      selectedDepartments.length === 0
+      selectedDepartments?.length === 0
     ) {
       toast.error("Please fill in all required fields");
       return;

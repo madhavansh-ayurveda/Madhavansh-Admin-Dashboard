@@ -461,7 +461,7 @@ export default function AdminManagement() {
                     <div className="h-4 w-48 bg-muted rounded"></div>
                   </div>
                 </div>
-              ) : filteredAdmins.length === 0 ? (
+              ) : filteredAdmins?.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
                     <UserPlus className="h-6 w-6 text-muted-foreground" />
@@ -525,7 +525,7 @@ export default function AdminManagement() {
                                 <span className="text-sm text-muted-foreground">
                                   All permissions / No Restriction
                                 </span>
-                              ) : admin.permissions.length > 0 ? (
+                              ) : admin.permissions?.length > 0 ? (
                                 admin.permissions.map((permission) => (
                                   <TooltipProvider key={permission}>
                                     <Tooltip>

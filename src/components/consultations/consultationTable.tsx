@@ -1184,7 +1184,7 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({ data }) => {
                                   onselect={setSelectedMedicines}
                                 />
 
-                                {selectedMedicines.length > 0 && (
+                                {selectedMedicines?.length > 0 && (
                                   <div className="mt-4">
                                     <Label>Selected Medicines</Label>
                                     <div className="grid grid-cols-1 gap-2 mt-2">

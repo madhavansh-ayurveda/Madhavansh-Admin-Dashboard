@@ -74,7 +74,7 @@ const MedicinePrescription = ({
         />
       </div>
       
-      {selectedMedicines.length > 0 && (
+      {selectedMedicines?.length > 0 && (
         <div className="mt-4 text-md">
           Total Cost: ₹{totalCost}
         </div>

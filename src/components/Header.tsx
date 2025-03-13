@@ -311,7 +311,7 @@ export default function Header({
                 )}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {notifications.length > 0 ? (
+              {notifications?.length > 0 ? (
                 <div className="max-h-[300px] overflow-auto">
                   {notifications.map((notification) => (
                     <DropdownMenuItem

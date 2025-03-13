@@ -370,7 +370,7 @@ export default function Doctors() {
                                   {spec}
                                 </Badge>
                               ))}
-                              {doctor.specialization.length > 2 && (
+                              {doctor.specialization?.length > 2 && (
                                 <Badge variant="outline" className="bg-muted">
                                   +{doctor.specialization.length - 2}
                                 </Badge>
@@ -384,7 +384,7 @@ export default function Doctors() {
                                   {dept}
                                 </Badge>
                               ))}
-                              {doctor.department.length > 2 && (
+                              {doctor.department?.length > 2 && (
                                 <Badge variant="secondary" className="bg-muted">
                                   +{doctor.department.length - 2}
                                 </Badge>
@@ -501,8 +501,8 @@ export default function Doctors() {
         
         <CardFooter className="px-0 flex flex-col sm:flex-row items-center justify-between gap-4 border-t pt-6">
           <div className="text-sm text-muted-foreground">
-            Showing {currentDoctors.length > 0 ? indexOfFirstDoctor + 1 : 0} to{" "}
-            {Math.min(indexOfLastDoctor, filteredDoctors.length)} of {filteredDoctors.length} doctors
+            Showing {currentDoctors?.length > 0 ? indexOfFirstDoctor + 1 : 0} to{" "}
+            {Math.min(indexOfLastDoctor, filteredDoctors?.length)} of {filteredDoctors?.length} doctors
           </div>
           
           <div className="flex items-center gap-2">
