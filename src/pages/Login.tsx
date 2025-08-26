@@ -23,6 +23,10 @@ export default function Login() {
       console.log("Login response:", response);
 
       if (response.success && response.user) {
+        console.log("✅ Logged in:", response);
+        return; // stop execution
+      }
+      if (response.success && response.user) {
         dispatch(
           setCredentials({ user: response.user, token: response.token })
         );
