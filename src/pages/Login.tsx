@@ -44,7 +44,7 @@ export default function Login() {
         Cookies.set("authorization", response.authorization, { expires: 1 });
         Cookies.set("role", response.user.role, { expires: 1 });
 
-        // navigate("/", { replace: true });
+        navigate("/", { replace: true });
       }
     } catch (error: any) {
       console.error("Login error:", error);
