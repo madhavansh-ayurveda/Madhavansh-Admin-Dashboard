@@ -7,7 +7,7 @@ export const authAdminApi = {
   login: async (email: string, password: string) => {
     try {
       console.log("Attempting login with:", { email, password });
-      const response = await AdminApi.post(`/auth/login`, {
+      const response = await AdminApi.post(`/login`, {
         email,
         password,
       });
@@ -31,7 +31,7 @@ export const authAdminApi = {
 
   logout: async () => {
     try {
-      const response = await AdminApi.post(`/auth/logout`);
+      const response = await AdminApi.post(`/logout`);
       localStorage.removeItem("token");
       Cookies.remove('token')
       Cookies.remove('role')
@@ -61,7 +61,7 @@ export const authAdminApi = {
         throw new Error("No token found");
       }
 
-      const response = await AdminApi.get(`/auth/check`, {
+      const response = await AdminApi.get(`/auth/check-auth`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
