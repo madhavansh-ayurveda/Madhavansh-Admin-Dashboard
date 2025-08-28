@@ -552,7 +552,7 @@ const MedicineStock = () => {
                     <Input
                       id="price"
                       type="number"
-                      step="0.01"
+                      step="1"
                       min="0"
                       placeholder="Price"
                       value={formData.price}
