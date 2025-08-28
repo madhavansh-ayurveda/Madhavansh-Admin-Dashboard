@@ -7,7 +7,7 @@ export const authAdminApi = {
   login: async (email: string, password: string) => {
     try {
       console.log("Attempting login with:", { email, password });
-      const response = await AdminApi.post(`/login`, {
+      const response = await AdminApi.post(`/auth/login`, {
         email,
         password,
       });
