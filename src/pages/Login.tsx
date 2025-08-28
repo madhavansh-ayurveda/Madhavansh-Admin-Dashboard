@@ -22,10 +22,10 @@ export default function Login() {
       const response = await authAdminApi.login(email, password);
       console.log("Login response:", response);
 
-      if (response.success && response.user) {
-        console.log("✅ Logged in:", response);
-        return; // stop execution
-      }
+      // if (response.success && response.user) {
+      //   console.log("✅ Logged in:", response);
+      //   return; // stop execution
+      // }
       if (response.success && response.user) {
         dispatch(
           setCredentials({ user: response.user, token: response.token })
